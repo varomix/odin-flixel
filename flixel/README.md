@@ -322,7 +322,63 @@ free(state)                     // Free state
 - **Memory**: Manual control, no garbage collection
 - **Thread Safety**: Single-threaded design
 
+## Custom Fonts
+
+The flixel engine automatically loads and uses a custom font from `flixel/data/nokiafc22.ttf` by default. This font is used for all text rendering throughout your game.
+
+### Using the Default Font
+
+The font is loaded automatically when you call `flx.init()`. No additional setup required!
+
+```odin
+game := flx.init(800, 600, "My Game", &initial_state.base, 60)
+// Custom font is now loaded and will be used for all text rendering
+```
+
+### Loading a Different Font
+
+You can load a different custom font by calling `load_custom_font()` after initialization:
+
+```odin
+flx.load_custom_font("path/to/your/font.ttf")
+```
+
+### Adjusting Font Spacing
+
+You can adjust the spacing between characters:
+
+```odin
+// Tighter spacing
+flx.set_font_spacing(0.5)
+
+// Default spacing
+flx.set_font_spacing(1.0)
+
+// Wider spacing
+flx.set_font_spacing(2.0)
+
+// Get current spacing
+spacing := flx.get_font_spacing()
+```
+
+### Font Functions
+
+| Function | Description |
+|----------|-------------|
+| `load_custom_font(path)` | Load a font from a file path |
+| `set_font_spacing(spacing)` | Set character spacing (default: 1.0) |
+| `get_font_spacing()` | Get current character spacing |
+
+**Note:** If the custom font fails to load, the engine will automatically fall back to raylib's default font.
+
 ## Version
+
+**0.3.1** - Custom font support
+- Added automatic custom font loading from `flixel/data/` directory
+- Added `load_custom_font()` to load custom fonts
+- Added `set_font_spacing()` and `get_font_spacing()` for font configuration
+- All text rendering now uses custom font by default
+- Automatic fallback to default font if custom font fails to load
 
 **0.3.0** - Abstracted raylib dependency
 - Added `flx.Color` type - no need to import raylib!
@@ -357,6 +413,8 @@ See the main TODO.md for planned features:
 - Tilemap rendering
 - Audio system
 - Camera system
+- Multiple font support (font per text object)
+- Font atlas preloading
 
 ## License
 

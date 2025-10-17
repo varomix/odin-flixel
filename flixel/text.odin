@@ -21,7 +21,13 @@ text_new_default :: proc(x, y: f32, width: f32, text: string, font_size: i32 = 2
 }
 
 // Constructor with custom color
-text_new_with_color :: proc(x, y: f32, width: f32, text: string, font_size: i32, color: Color) -> ^Text {
+text_new_with_color :: proc(
+	x, y: f32,
+	width: f32,
+	text: string,
+	font_size: i32,
+	color: Color,
+) -> ^Text {
 	txt := new(Text)
 
 	// Initialize base object
@@ -32,8 +38,12 @@ text_new_with_color :: proc(x, y: f32, width: f32, text: string, font_size: i32,
 	txt.font_size = font_size
 	txt.color = color
 
-	// Measure text
-	measured := rl.MeasureTextEx(rl.GetFontDefault(), cstring(raw_data(text)), f32(font_size), 1.0)
+	// Measure text using custom font
+	font := rl.GetFontDefault()
+	if font_loaded {
+		font = custom_font
+	}
+	measured := rl.MeasureTextEx(font, cstring(raw_data(text)), f32(font_size), font_spacing)
 	txt.text_width = measured.x
 	txt.text_height = measured.y
 
@@ -61,7 +71,19 @@ text_draw :: proc(txt: ^Text) {
 		return
 	}
 
-	rl.DrawText(cstring(raw_data(txt.text)), i32(txt.x), i32(txt.y), txt.font_size, txt.color)
+	// Use custom font if loaded
+	if font_loaded {
+		rl.DrawTextEx(
+			custom_font,
+			cstring(raw_data(txt.text)),
+			{txt.x, txt.y},
+			f32(txt.font_size),
+			font_spacing,
+			txt.color,
+		)
+	} else {
+		rl.DrawText(cstring(raw_data(txt.text)), i32(txt.x), i32(txt.y), txt.font_size, txt.color)
+	}
 }
 
 // Destroy
@@ -73,12 +95,11 @@ text_destroy :: proc(txt: ^Text) {
 // Helper to change text
 text_set_text :: proc(txt: ^Text, text: string) {
 	txt.text = text
-	measured := rl.MeasureTextEx(
-		rl.GetFontDefault(),
-		cstring(raw_data(text)),
-		f32(txt.font_size),
-		1.0,
-	)
+	font := rl.GetFontDefault()
+	if font_loaded {
+		font = custom_font
+	}
+	measured := rl.MeasureTextEx(font, cstring(raw_data(text)), f32(txt.font_size), font_spacing)
 	txt.text_width = measured.x
 	txt.text_height = measured.y
 }
@@ -91,5 +112,17 @@ text_set_color :: proc(txt: ^Text, color: Color) {
 // Quick text drawing - one-liner for simple text rendering
 // This is useful for debug text or UI that doesn't need to be part of the state
 text_quick :: proc(x, y: f32, text: string, font_size: i32 = 20, color: Color = WHITE) {
-	rl.DrawText(cstring(raw_data(text)), i32(x), i32(y), font_size, color)
+	// Use custom font if loaded
+	if font_loaded {
+		rl.DrawTextEx(
+			custom_font,
+			cstring(raw_data(text)),
+			{x, y},
+			f32(font_size),
+			font_spacing,
+			color,
+		)
+	} else {
+		rl.DrawText(cstring(raw_data(text)), i32(x), i32(y), font_size, color)
+	}
 }

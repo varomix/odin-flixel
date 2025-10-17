@@ -31,6 +31,11 @@ Game :: struct {
 // Global game instance
 game: ^Game
 
+// Global custom font
+custom_font: rl.Font
+font_loaded: bool = false
+font_spacing: f32 = 1.0 // Spacing between characters
+
 // Initialize the game engine
 init :: proc(
 	width, height: i32,
@@ -60,6 +65,9 @@ init :: proc(
 
 	// Disable ESC as exit key so games can use it for navigation
 	rl.SetExitKey(.KEY_NULL)
+
+	// Load custom font
+	load_custom_font("flixel/data/nokiafc22.ttf")
 
 	// Create render texture at base resolution for pixel-perfect scaling
 	if scale > 1 {
@@ -162,6 +170,11 @@ run :: proc(g: ^Game) {
 		rl.UnloadRenderTexture(g.render_target)
 	}
 
+	// Unload custom font if it was loaded
+	if font_loaded {
+		rl.UnloadFont(custom_font)
+	}
+
 	rl.CloseWindow()
 }
 
@@ -175,4 +188,26 @@ quit :: proc() {
 	if game != nil {
 		game.should_quit = true
 	}
+}
+
+// Load a custom font from a file path
+load_custom_font :: proc(font_path: string) {
+	custom_font = rl.LoadFont(cstring(raw_data(font_path)))
+	if custom_font.texture.id != 0 {
+		font_loaded = true
+		fmt.println("Custom font loaded successfully:", font_path)
+	} else {
+		fmt.println("Warning: Failed to load custom font, using default")
+		custom_font = rl.GetFontDefault()
+	}
+}
+
+// Set the spacing between characters for the custom font
+set_font_spacing :: proc(spacing: f32) {
+	font_spacing = spacing
+}
+
+// Get the current font spacing
+get_font_spacing :: proc() -> f32 {
+	return font_spacing
 }

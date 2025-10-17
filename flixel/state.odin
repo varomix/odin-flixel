@@ -64,8 +64,8 @@ state_update :: proc(state: ^State, dt: f32) {
 	}
 
 	for member in state.members {
-		if member.exists && member.active {
-			object_update(member, dt)
+		if member != nil && member.exists && member.active {
+			member.vtable.update(member, dt)
 		}
 	}
 }
@@ -77,8 +77,8 @@ state_draw :: proc(state: ^State) {
 	}
 
 	for member in state.members {
-		if member.exists && member.visible {
-			object_draw(member)
+		if member != nil && member.exists && member.visible {
+			member.vtable.draw(member)
 		}
 	}
 }

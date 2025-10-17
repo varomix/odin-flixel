@@ -46,6 +46,11 @@ sprite_new :: proc(x: f32 = 0, y: f32 = 0) -> ^Sprite {
 	sprite.was_touching = COLLISION_NONE
 	sprite.allow_collisions = COLLISION_ANY
 
+	// Override vtable for sprite
+	sprite.vtable.update = sprite_update
+	sprite.vtable.draw = sprite_draw
+	sprite.vtable.destroy = sprite_destroy
+
 	return sprite
 }
 
@@ -58,7 +63,8 @@ sprite_make_graphic :: proc(sprite: ^Sprite, width: i32, height: i32, color: Col
 }
 
 // Update sprite physics
-sprite_update :: proc(sprite: ^Sprite, dt: f32) {
+sprite_update :: proc(obj: ^Object, dt: f32) {
+	sprite := cast(^Sprite)obj
 	if !sprite.active || !sprite.exists {
 		return
 	}
@@ -72,7 +78,7 @@ sprite_update :: proc(sprite: ^Sprite, dt: f32) {
 	sprite.velocity.y += sprite.acceleration.y * dt
 
 	// Apply drag
-	if sprite.drag.x != 0 {
+	if sprite.acceleration.x == 0 && sprite.drag.x != 0 {
 		drag_force := sprite.drag.x * dt
 		if sprite.velocity.x > 0 {
 			sprite.velocity.x -= drag_force
@@ -87,7 +93,7 @@ sprite_update :: proc(sprite: ^Sprite, dt: f32) {
 		}
 	}
 
-	if sprite.drag.y != 0 {
+	if sprite.acceleration.y == 0 && sprite.drag.y != 0 {
 		drag_force := sprite.drag.y * dt
 		if sprite.velocity.y > 0 {
 			sprite.velocity.y -= drag_force
@@ -121,7 +127,8 @@ sprite_update :: proc(sprite: ^Sprite, dt: f32) {
 }
 
 // Draw the sprite
-sprite_draw :: proc(sprite: ^Sprite) {
+sprite_draw :: proc(obj: ^Object) {
+	sprite := cast(^Sprite)obj
 	if !sprite.visible || !sprite.exists {
 		return
 	}
@@ -141,7 +148,8 @@ sprite_draw :: proc(sprite: ^Sprite) {
 }
 
 // Destroy sprite
-sprite_destroy :: proc(sprite: ^Sprite) {
+sprite_destroy :: proc(obj: ^Object) {
+	sprite := cast(^Sprite)obj
 	if sprite.has_texture {
 		rl.UnloadTexture(sprite.texture)
 	}

@@ -8,6 +8,7 @@ MenuState :: struct {
 	using base:  flx.State,
 	title:       ^flx.Text,
 	subtitle:    ^flx.Text,
+	info:        ^flx.Text,
 	frame_count: f32,
 }
 
@@ -28,12 +29,16 @@ menu_state_create :: proc(state: ^flx.State) {
 	menu := cast(^MenuState)state
 
 	// Add a title (using new color parameter)
-	menu.title = flx.text_new(250, 150, 400, "MIX MOTOR", 48, flx.YELLOW)
+	menu.title = flx.text_new(200, 100, 400, "MIX MOTOR", 48, flx.YELLOW)
 	flx.state_add(&menu.base, &menu.title.base)
 
 	// Add a subtitle with instructions (using new color parameter)
-	menu.subtitle = flx.text_new(200, 250, 400, "Press SPACE to start", 24, flx.WHITE)
+	menu.subtitle = flx.text_new(150, 200, 400, "Press SPACE to start", 24, flx.WHITE)
 	flx.state_add(&menu.base, &menu.subtitle.base)
+
+	// Add info about custom font
+	menu.info = flx.text_new(150, 280, 400, "Using Nokia FC22 Custom Font", 16, flx.LIGHT_GRAY)
+	flx.state_add(&menu.base, &menu.info.base)
 }
 
 // Update the menu state
@@ -82,5 +87,12 @@ menu_state_draw :: proc(state: ^flx.State) {
 	}
 
 	// Draw additional instructions - one-liner!
-	flx.text_quick(10, 570, "SPACE to play | ESC to quit", 16, flx.GRAY)
+	flx.text_quick(10, 550, "SPACE to play | ESC to quit", 16, flx.GRAY)
+
+	// Show font info
+	flx.text_quick(10, 10, "Custom Font Demo", 20, flx.GREEN)
+	flx.text_quick(10, 35, "8px size", 8, flx.WHITE)
+	flx.text_quick(10, 50, "16px size", 16, flx.WHITE)
+	flx.text_quick(10, 70, "24px size", 24, flx.ORANGE)
+	flx.text_quick(10, 100, "32px size", 32, flx.PURPLE)
 }

@@ -59,4 +59,11 @@ object_init :: proc(obj: ^Object, x: f32 = 0, y: f32 = 0, width: f32 = 0, height
 	obj.active = true
 	obj.visible = true
 	obj.exists = true
+
+	// Setup vtable for base object
+	vtable := new(Object_VTable)
+	vtable.update = object_update
+	vtable.draw = object_draw
+	vtable.destroy = object_destroy
+	obj.vtable = vtable
 }
