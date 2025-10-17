@@ -1,0 +1,36 @@
+# Odin build artifacts
+*.bin
+*.exe
+*.dll
+*.so
+*.dylib
+mix_motor
+
+# Debug files
+*.pdb
+*.dSYM/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Build directories
+build/
+bin/
+obj/
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# old resorces
+old_flixel/
+old_flixel_examples/
