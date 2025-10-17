@@ -2,7 +2,6 @@ package main
 
 import "core:fmt"
 import flx "flixel"
-import rl "vendor:raylib"
 
 main :: proc() {
 	fmt.println("Starting Mix Motor - Flixel-like Game Engine...")
@@ -20,7 +19,7 @@ main :: proc() {
 	)
 
 	// Set background color
-	flx.set_bg_color(game, rl.Color{20, 20, 40, 255})
+	flx.set_bg_color(game, flx.Color{20, 20, 40, 255})
 
 	// Run the game loop
 	flx.run(game)

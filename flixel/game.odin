@@ -5,18 +5,27 @@ import rl "vendor:raylib"
 
 // Game is the main game engine
 Game :: struct {
-	width:      i32,
-	height:     i32,
-	title:      cstring,
+	width:         i32,
+	height:        i32,
+	title:         cstring,
+
+	// Scale factor for pixel-perfect scaling
+	scale:         i32,
+
+	// Render texture for scaling
+	render_target: rl.RenderTexture2D,
 
 	// Current state
-	state:      ^State,
+	state:         ^State,
 
 	// Background color
-	bg_color:   rl.Color,
+	bg_color:      Color,
 
 	// Frame timing
-	target_fps: i32,
+	target_fps:    i32,
+
+	// Quit flag
+	should_quit:   bool,
 }
 
 // Global game instance
@@ -28,6 +37,7 @@ init :: proc(
 	title: cstring,
 	initial_state: ^State,
 	target_fps: i32 = 60,
+	scale: i32 = 1,
 ) -> ^Game {
 	g := new(Game)
 
@@ -35,17 +45,27 @@ init :: proc(
 	g.height = height
 	g.title = title
 	g.target_fps = target_fps
-	g.bg_color = rl.BLACK
+	g.scale = scale
+	g.bg_color = BLACK
+	g.should_quit = false
 
 	// Set global reference
 	game = g
 
-	// Initialize Raylib
-	rl.InitWindow(width, height, title)
+	// Initialize Raylib with scaled window size
+	window_width := width * scale
+	window_height := height * scale
+	rl.InitWindow(window_width, window_height, title)
 	rl.SetTargetFPS(target_fps)
 
 	// Disable ESC as exit key so games can use it for navigation
 	rl.SetExitKey(.KEY_NULL)
+
+	// Create render texture at base resolution for pixel-perfect scaling
+	if scale > 1 {
+		g.render_target = rl.LoadRenderTexture(width, height)
+		rl.SetTextureFilter(g.render_target.texture, .POINT) // Nearest-neighbor for crisp pixels
+	}
 
 	// Set initial state
 	if initial_state != nil {
@@ -76,7 +96,7 @@ switch_state :: proc(g: ^Game, new_state: ^State) {
 
 // Run the game loop
 run :: proc(g: ^Game) {
-	for !rl.WindowShouldClose() {
+	for !rl.WindowShouldClose() && !g.should_quit {
 		dt := rl.GetFrameTime()
 
 		// Update
@@ -89,18 +109,46 @@ run :: proc(g: ^Game) {
 		}
 
 		// Draw
-		rl.BeginDrawing()
-		rl.ClearBackground(g.bg_color)
+		if g.scale > 1 {
+			// Render to texture at base resolution
+			rl.BeginTextureMode(g.render_target)
+			rl.ClearBackground(g.bg_color)
 
-		if g.state != nil {
-			if g.state.vtable != nil && g.state.vtable.draw != nil {
-				g.state.vtable.draw(g.state)
-			} else {
-				state_draw(g.state)
+			if g.state != nil {
+				if g.state.vtable != nil && g.state.vtable.draw != nil {
+					g.state.vtable.draw(g.state)
+				} else {
+					state_draw(g.state)
+				}
 			}
-		}
 
-		rl.EndDrawing()
+			rl.EndTextureMode()
+
+			// Draw scaled texture to screen
+			rl.BeginDrawing()
+			rl.ClearBackground(BLACK)
+
+			// Flip texture vertically (Raylib render textures are upside down)
+			source := rl.Rectangle{0, 0, f32(g.width), -f32(g.height)}
+			dest := rl.Rectangle{0, 0, f32(g.width * g.scale), f32(g.height * g.scale)}
+			rl.DrawTexturePro(g.render_target.texture, source, dest, {0, 0}, 0, rl.WHITE)
+
+			rl.EndDrawing()
+		} else {
+			// No scaling, draw directly
+			rl.BeginDrawing()
+			rl.ClearBackground(g.bg_color)
+
+			if g.state != nil {
+				if g.state.vtable != nil && g.state.vtable.draw != nil {
+					g.state.vtable.draw(g.state)
+				} else {
+					state_draw(g.state)
+				}
+			}
+
+			rl.EndDrawing()
+		}
 	}
 
 	// Cleanup
@@ -109,15 +157,22 @@ run :: proc(g: ^Game) {
 		free(g.state)
 	}
 
+	// Unload render texture
+	if g.scale > 1 {
+		rl.UnloadRenderTexture(g.render_target)
+	}
+
 	rl.CloseWindow()
 }
 
 // Set background color
-set_bg_color :: proc(g: ^Game, color: rl.Color) {
+set_bg_color :: proc(g: ^Game, color: Color) {
 	g.bg_color = color
 }
 
 // Quit the game
 quit :: proc() {
-	rl.CloseWindow()
+	if game != nil {
+		game.should_quit = true
+	}
 }

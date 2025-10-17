@@ -16,9 +16,9 @@ State :: struct {
 }
 
 State_VTable :: struct {
-	create:  proc(state: ^State),
-	update:  proc(state: ^State, dt: f32),
-	draw:    proc(state: ^State),
+	create: proc(state: ^State),
+	update: proc(state: ^State, dt: f32),
+	draw:   proc(state: ^State),
 }
 
 // Setup a state with its lifecycle callbacks
@@ -87,8 +87,10 @@ state_draw :: proc(state: ^State) {
 // This automatically frees the vtable and cleans up resources
 state_destroy :: proc(state: ^State) {
 	for member in state.members {
-		if member.exists {
+		if member != nil {
 			object_destroy(member)
+			// Free the actual object memory
+			free(member)
 		}
 	}
 	delete(state.members)

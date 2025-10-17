@@ -1,0 +1,17 @@
+# Build artifacts
+ezplatformer
+ezplatformer.dSYM/
+
+# Odin build files
+*.o
+*.a
+*.lib
+*.exe
+*.pdb
+
+# Debug symbols
+*.dSYM
+
+# OS files
+.DS_Store
+Thumbs.db

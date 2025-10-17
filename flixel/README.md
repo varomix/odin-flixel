@@ -39,6 +39,22 @@ State management system for organizing game screens (menus, gameplay, etc.).
 - `state_draw()` - Draw all objects in the state
 - `state_destroy()` - Clean up state resources
 
+### `color.odin`
+Color types and constants that abstract away raylib dependency.
+
+**Key Types:**
+- `Color` - RGBA color struct (wraps raylib Color internally)
+
+**Key Constants:**
+- `BLACK`, `WHITE`, `RED`, `GREEN`, `BLUE`, `YELLOW`
+- `ORANGE`, `PURPLE`, `PINK`, `BROWN`
+- `GRAY`, `DARK_GRAY`, `LIGHT_GRAY`
+
+**Key Procedures:**
+- `rgba()` - Create color from RGBA values
+- `rgb()` - Create color from RGB values (alpha = 255)
+- `make_color()` - Overloaded color creation
+
 ### `object.odin`
 Base game object with position, velocity, and acceleration physics.
 
@@ -81,18 +97,21 @@ Text rendering component that extends Object.
 ```odin
 package main
 
-import rl "vendor:raylib"
 import flx "flixel"
 
 main :: proc() {
+    // Initialize global state
+    flx.global_init()
+    
     initial_state := my_state_new()
     
     game := flx.init(
-        800,                    // width
-        600,                    // height
+        320,                    // width
+        240,                    // height
         "My Game",              // title
         &initial_state.base,    // initial state
         60,                     // target FPS
+        2,                      // scale factor (optional, default = 1)
     )
     
     flx.run(game)
@@ -148,28 +167,77 @@ my_state_draw :: proc(state: ^flx.State) {
 // No destroy function needed - framework handles cleanup automatically!
 ```
 
-### Adding Text Objects
+### Working with Colors
+
+**No need to import raylib!** Use `flx.Color` instead:
 
 ```odin
-// Create text
-text := flx.text_new(x, y, width, "My Text", font_size)
+// Using color constants
+sprite := flx.sprite_new(100, 100)
+flx.sprite_make_graphic(sprite, 32, 32, flx.RED)
 
-// Change color
-flx.text_set_color(text, rl.RED)
+// Creating custom colors
+my_color := flx.Color{170, 170, 170, 255}  // Light gray
+custom := flx.rgb(100, 200, 50)             // RGB helper
+alpha := flx.rgba(100, 200, 50, 128)        // RGBA helper
 
-// Add to state
-flx.state_add(state, &text.base)
+// Set background color
+flx.set_bg_color(game, flx.Color{20, 20, 40, 255})
 ```
+
+**Available Color Constants:**
+- `flx.BLACK`, `flx.WHITE`
+- `flx.RED`, `flx.GREEN`, `flx.BLUE`
+- `flx.YELLOW`, `flx.ORANGE`, `flx.PURPLE`, `flx.PINK`
+- `flx.BROWN`, `flx.GRAY`, `flx.DARK_GRAY`, `flx.LIGHT_GRAY`
+
+### Adding Text Objects
+
+**Three Ways to Use Text:**
+
+```odin
+// 1. Text objects in state (persistent, managed by state)
+title := flx.text_new(100, 50, 200, "Game Title", 32, flx.YELLOW)
+flx.state_add(state, &title.base)  // Draws automatically every frame
+
+// 2. Text objects without color (defaults to WHITE)
+score := flx.text_new(10, 10, 100, "Score: 0", 20)
+flx.state_add(state, &score.base)
+
+// 3. Quick text (one-liner, no state needed - perfect for debug/UI)
+play_state_draw :: proc(state: ^flx.State) {
+    // ... draw other stuff ...
+    
+    // One line - as simple as raylib!
+    flx.text_quick(10, 570, "Press ESC to quit", 16, flx.GRAY)
+}
+```
+
+**API Reference:**
+
+| Function | Parameters | Use Case |
+|----------|-----------|----------|
+| `text_new()` | `x, y, width, text, font_size` | Persistent text, default WHITE color |
+| `text_new()` | `x, y, width, text, font_size, color` | Persistent text, custom color |
+| `text_quick()` | `x, y, text, font_size, color` | One-liner instant draw (no state) |
+
+**When to Use Each:**
+
+- **`text_new()` + state**: For game elements that need updates (scores, health, etc.)
+- **`text_quick()`**: For static UI, debug info, or instructions
 
 ### Physics
 
 ```odin
-// Create object with velocity
-obj := flx.text_new(100, 100, 50, "Moving!", 20)
-obj.velocity = rl.Vector2{100, 0}  // Move right at 100 px/sec
-obj.acceleration = rl.Vector2{0, 200}  // Gravity
+// Create sprite with velocity
+sprite := flx.sprite_new(100, 100)
+flx.sprite_make_graphic(sprite, 16, 16, flx.RED)
+sprite.velocity = {100, 0}        // Move right at 100 px/sec
+sprite.acceleration = {0, 200}    // Gravity
+sprite.max_velocity = {200, 400}  // Speed limits
+sprite.drag = {400, 0}            // Horizontal friction
 
-flx.state_add(state, &obj.base)
+flx.state_add(state, &sprite.base)
 
 // Physics updates automatically in flx.state_update()
 ```
@@ -182,10 +250,37 @@ new_state := another_state_new()
 flx.switch_state(flx.game, &new_state.base)
 ```
 
+### Input Handling
+
+```odin
+// Update input state each frame
+flx.global_update_input()
+
+// Check keys
+if flx.g.keys.LEFT {
+    player.acceleration.x = -200
+}
+if flx.g.keys.RIGHT {
+    player.acceleration.x = 200
+}
+
+// Check for just pressed
+if flx.keys_just_pressed("SPACE") {
+    player.velocity.y = -200
+}
+
+// Check specific key press (no raylib import needed!)
+if flx.key_pressed(.ESCAPE) {
+    flx.quit()
+}
+```
+
 ## Dependencies
 
 - **Odin core libraries** - Standard library
-- **Raylib** - Graphics and windowing (via `vendor:raylib`)
+- **Raylib** - Graphics and windowing (used internally, users don't need to import it!)
+
+**Note:** User code does NOT need to import raylib - all necessary types are exposed through the `flx` package!
 
 ## Design Patterns
 
@@ -228,6 +323,13 @@ free(state)                     // Free state
 - **Thread Safety**: Single-threaded design
 
 ## Version
+
+**0.3.0** - Abstracted raylib dependency
+- Added `flx.Color` type - no need to import raylib!
+- Added color constants: `BLACK`, `WHITE`, `RED`, etc.
+- Added `flx.Key` enum and `key_pressed()` function
+- Added scale factor support for pixel-perfect scaling
+- Users no longer need to import raylib in their game code
 
 **0.2.1** - Simplified state creation API
 - Added `state_setup()` helper - one line to set up a state!

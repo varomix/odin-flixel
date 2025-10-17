@@ -2,7 +2,6 @@ package main
 
 import "core:fmt"
 import flx "flixel"
-import rl "vendor:raylib"
 
 // PlayState is our main game state
 PlayState :: struct {
@@ -33,7 +32,7 @@ play_state_update :: proc(state: ^flx.State, dt: f32) {
 	play := cast(^PlayState)state
 
 	// Check for input to return to menu
-	if rl.IsKeyPressed(.ESCAPE) {
+	if flx.key_pressed(.ESCAPE) {
 		fmt.println("Returning to Menu State...")
 		menu := menu_state_new()
 		flx.switch_state(flx.game, &menu.base)
@@ -61,6 +60,6 @@ play_state_draw :: proc(state: ^flx.State) {
 		}
 	}
 
-	// Draw instructions
-	rl.DrawText("ESC to return to menu", 10, 570, 16, rl.GRAY)
+	// Draw instructions - one-liner!
+	flx.text_quick(10, 570, "ESC to return to menu", 16, flx.GRAY)
 }

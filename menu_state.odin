@@ -2,7 +2,6 @@ package main
 
 import "core:fmt"
 import flx "flixel"
-import rl "vendor:raylib"
 
 // MenuState is an example menu state
 MenuState :: struct {
@@ -28,14 +27,12 @@ menu_state_new :: proc() -> ^MenuState {
 menu_state_create :: proc(state: ^flx.State) {
 	menu := cast(^MenuState)state
 
-	// Add a title
-	menu.title = flx.text_new(250, 150, 400, "MIX MOTOR", 48)
-	flx.text_set_color(menu.title, rl.YELLOW)
+	// Add a title (using new color parameter)
+	menu.title = flx.text_new(250, 150, 400, "MIX MOTOR", 48, flx.YELLOW)
 	flx.state_add(&menu.base, &menu.title.base)
 
-	// Add a subtitle with instructions
-	menu.subtitle = flx.text_new(200, 250, 400, "Press SPACE to start", 24)
-	flx.text_set_color(menu.subtitle, rl.WHITE)
+	// Add a subtitle with instructions (using new color parameter)
+	menu.subtitle = flx.text_new(200, 250, 400, "Press SPACE to start", 24, flx.WHITE)
 	flx.state_add(&menu.base, &menu.subtitle.base)
 }
 
@@ -54,14 +51,14 @@ menu_state_update :: proc(state: ^flx.State, dt: f32) {
 	}
 
 	// Check for input to switch to play state
-	if rl.IsKeyPressed(.SPACE) {
+	if flx.key_pressed(.SPACE) {
 		fmt.println("Switching to Play State...")
 		new_state := play_state_new()
 		flx.switch_state(flx.game, &new_state.base)
 	}
 
 	// Check for ESC to quit
-	if rl.IsKeyPressed(.ESCAPE) {
+	if flx.key_pressed(.ESCAPE) {
 		fmt.println("Quitting game...")
 		flx.quit()
 	}
@@ -84,6 +81,6 @@ menu_state_draw :: proc(state: ^flx.State) {
 		}
 	}
 
-	// Draw additional instructions
-	rl.DrawText("SPACE to play | ESC to quit", 10, 570, 16, rl.GRAY)
+	// Draw additional instructions - one-liner!
+	flx.text_quick(10, 570, "SPACE to play | ESC to quit", 16, flx.GRAY)
 }
