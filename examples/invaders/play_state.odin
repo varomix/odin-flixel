@@ -4,15 +4,15 @@ import flx "../../flixel"
 
 // PlayState is the main game state for Flx Invaders
 PlayState :: struct {
-	using base:      flx.State,
-	player:          ^PlayerShip,
-	player_bullets:  ^flx.Group,
-	aliens:          ^flx.Group,
-	alien_bullets:   ^flx.Group,
-	shields:         ^flx.Group,
-	status_text:     ^flx.Text,
-	game_over:       bool,
-	game_message:    string,
+	using base:     flx.State,
+	player:         ^PlayerShip,
+	player_bullets: ^flx.Group,
+	aliens:         ^flx.Group,
+	alien_bullets:  ^flx.Group,
+	shields:        ^flx.Group,
+	status_text:    ^flx.Text,
+	game_over:      bool,
+	game_message:   string,
 }
 
 // Create a new PlayState
@@ -57,7 +57,7 @@ play_state_create :: proc(state: ^flx.State) {
 
 	// Create aliens (5 rows of 10)
 	play.aliens = flx.group_new()
-	colors := []flx.Color{
+	colors := []flx.Color {
 		flx.BLUE,
 		flx.Color{0, 128, 128, 255}, // BLUE | GREEN
 		flx.GREEN,
@@ -98,6 +98,30 @@ play_state_create :: proc(state: ^flx.State) {
 	flx.state_add(&play.base, &play.status_text.base)
 }
 
+// Collision callback for player bullets hitting aliens
+player_bullet_hit_alien :: proc(bullet: ^flx.Sprite, alien: ^flx.Sprite) {
+	flx.sprite_kill(bullet)
+	flx.sprite_kill(alien)
+}
+
+// Collision callback for player bullets hitting shields
+player_bullet_hit_shield :: proc(bullet: ^flx.Sprite, shield: ^flx.Sprite) {
+	flx.sprite_kill(bullet)
+	flx.sprite_kill(shield)
+}
+
+// Collision callback for alien bullets hitting player
+alien_bullet_hit_player :: proc(bullet: ^flx.Sprite, player: ^flx.Sprite) {
+	flx.sprite_kill(bullet)
+	flx.sprite_kill(player)
+}
+
+// Collision callback for alien bullets hitting shields
+alien_bullet_hit_shield :: proc(bullet: ^flx.Sprite, shield: ^flx.Sprite) {
+	flx.sprite_kill(bullet)
+	flx.sprite_kill(shield)
+}
+
 // Update game logic
 play_state_update :: proc(state: ^flx.State, dt: f32) {
 	play := cast(^PlayState)state
@@ -113,64 +137,31 @@ play_state_update :: proc(state: ^flx.State, dt: f32) {
 		return
 	}
 
-	// Check collisions - player bullets vs aliens and shields
+	// Kill bullets that go off-screen
 	for bullet in play.player_bullets.members {
-		if !bullet.exists do continue
-
-		// Kill bullets that go off-screen
-		if bullet.y < -bullet.height || bullet.y > f32(flx.get_height()) {
+		if bullet.exists && (bullet.y < -bullet.height || bullet.y > f32(flx.get_height())) {
 			flx.sprite_kill(bullet)
-			continue
-		}
-
-		// Check vs aliens
-		for alien in play.aliens.members {
-			if alien.exists && flx.sprites_overlap(bullet, alien) {
-				flx.sprite_kill(bullet)
-				flx.sprite_kill(alien)
-				break // Stop checking this bullet against other aliens
-			}
-		}
-
-		// Only check vs shields if bullet still exists
-		if bullet.exists {
-			for shield in play.shields.members {
-				if shield.exists && flx.sprites_overlap(bullet, shield) {
-					flx.sprite_kill(bullet)
-					flx.sprite_kill(shield)
-					break // Stop checking this bullet against other shields
-				}
-			}
 		}
 	}
 
-	// Check collisions - alien bullets vs player and shields
 	for bullet in play.alien_bullets.members {
-		if !bullet.exists do continue
-
-		// Kill bullets that go off-screen
-		if bullet.y < -bullet.height || bullet.y > f32(flx.get_height()) {
+		if bullet.exists && (bullet.y < -bullet.height || bullet.y > f32(flx.get_height())) {
 			flx.sprite_kill(bullet)
-			continue
-		}
-
-		// Check vs player
-		if play.player.exists && flx.sprites_overlap(bullet, &play.player.sprite) {
-			flx.sprite_kill(bullet)
-			flx.sprite_kill(&play.player.sprite)
-		}
-
-		// Only check vs shields if bullet still exists
-		if bullet.exists {
-			for shield in play.shields.members {
-				if shield.exists && flx.sprites_overlap(bullet, shield) {
-					flx.sprite_kill(bullet)
-					flx.sprite_kill(shield)
-					break // Stop checking this bullet against other shields
-				}
-			}
 		}
 	}
+
+	// Use engine collision detection instead of manual loops
+	// Player bullets vs aliens
+	flx.overlap(play.player_bullets, play.aliens, player_bullet_hit_alien)
+
+	// Player bullets vs shields
+	flx.overlap(play.player_bullets, play.shields, player_bullet_hit_shield)
+
+	// Alien bullets vs player
+	flx.overlap(play.alien_bullets, play.player, alien_bullet_hit_player)
+
+	// Alien bullets vs shields
+	flx.overlap(play.alien_bullets, play.shields, alien_bullet_hit_shield)
 
 	// Update all objects
 	flx.state_update(&play.base, dt)

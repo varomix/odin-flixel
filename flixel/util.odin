@@ -156,11 +156,76 @@ overlap_sprites :: proc(
 	return false
 }
 
+// Overlap detection between two groups
+overlap_group_group :: proc(
+	group1: ^Group,
+	group2: ^Group,
+	callback: proc(_: ^Sprite, _: ^Sprite),
+) {
+	if !group1.exists || !group2.exists {
+		return
+	}
+
+	for member1 in group1.members {
+		if !member1.exists do continue
+
+		for member2 in group2.members {
+			if member2.exists && sprites_overlap(member1, member2) {
+				if callback != nil {
+					callback(member1, member2)
+				}
+			}
+		}
+	}
+}
+
 // Generic overlap - handles different object types
 overlap :: proc {
 	overlap_group_sprite,
 	overlap_sprite_group,
 	overlap_sprites,
+	overlap_group_group,
+}
+
+// Automatic separation function for collision resolution
+separate_sprites :: proc(sprite1: ^Sprite, sprite2: ^Sprite) -> bool {
+	if !sprite1.exists || !sprite2.exists {
+		return false
+	}
+
+	// Calculate overlap
+	overlap_x :=
+		min(sprite1.x + sprite1.width, sprite2.x + sprite2.width) - max(sprite1.x, sprite2.x)
+	overlap_y :=
+		min(sprite1.y + sprite1.height, sprite2.y + sprite2.height) - max(sprite1.y, sprite2.y)
+
+	if overlap_x > 0 && overlap_y > 0 {
+		// Resolve on the axis with least overlap
+		if overlap_x < overlap_y {
+			// Resolve horizontally
+			if sprite1.x < sprite2.x {
+				// sprite1 is to the left
+				sprite1.x = sprite2.x - sprite1.width
+			} else {
+				// sprite1 is to the right
+				sprite1.x = sprite2.x + sprite2.width
+			}
+			sprite1.velocity.x = 0
+		} else {
+			// Resolve vertically
+			if sprite1.y < sprite2.y {
+				// sprite1 is above
+				sprite1.y = sprite2.y - sprite1.height
+			} else {
+				// sprite1 is below
+				sprite1.y = sprite2.y + sprite2.height
+			}
+			sprite1.velocity.y = 0
+		}
+		return true
+	}
+
+	return false
 }
 
 // Collide tilemap with sprite
