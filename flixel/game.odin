@@ -66,8 +66,11 @@ init :: proc(
 	// Disable ESC as exit key so games can use it for navigation
 	rl.SetExitKey(.KEY_NULL)
 
-	// Load custom font
-	load_custom_font("flixel/data/nokiafc22.ttf")
+	// Initialize texture cache
+	texture_cache = make(map[string]rl.Texture2D)
+
+	// Load custom font - try multiple paths to find it
+	load_default_font()
 
 	// Create render texture at base resolution for pixel-perfect scaling
 	if scale > 1 {
@@ -175,6 +178,12 @@ run :: proc(g: ^Game) {
 		rl.UnloadFont(custom_font)
 	}
 
+	// Unload all cached textures
+	for path, texture in texture_cache {
+		rl.UnloadTexture(texture)
+	}
+	delete(texture_cache)
+
 	rl.CloseWindow()
 }
 
@@ -188,6 +197,29 @@ quit :: proc() {
 	if game != nil {
 		game.should_quit = true
 	}
+}
+
+// Load the default font, searching multiple paths
+load_default_font :: proc() {
+	// Try multiple paths to find the font
+	paths := []string{
+		"flixel/data/nokiafc22.ttf",      // From root directory
+		"../../flixel/data/nokiafc22.ttf", // From examples subdirectories
+		"../flixel/data/nokiafc22.ttf",    // From one level up
+	}
+
+	for path in paths {
+		custom_font = rl.LoadFont(cstring(raw_data(path)))
+		if custom_font.texture.id != 0 {
+			font_loaded = true
+			fmt.println("Custom font loaded successfully:", path)
+			return
+		}
+	}
+
+	// If all paths fail, use default
+	fmt.println("Warning: Failed to load custom font, using default")
+	custom_font = rl.GetFontDefault()
 }
 
 // Load a custom font from a file path

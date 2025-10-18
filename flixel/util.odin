@@ -1,6 +1,7 @@
 package flixel
 
 import "core:fmt"
+import "core:math/rand"
 import rl "vendor:raylib"
 
 // Global game utilities and state
@@ -290,4 +291,24 @@ get_height :: proc() -> i32 {
 		return game.height
 	}
 	return 600
+}
+
+// Get elapsed time (delta time)
+get_elapsed :: proc() -> f32 {
+	return rl.GetFrameTime()
+}
+
+// Get random float between 0 and 1
+random :: proc() -> f32 {
+	return rand.float32()
+}
+
+// Get random float between min and max
+random_range :: proc(min: f32, max: f32) -> f32 {
+	return min + rand.float32() * (max - min)
+}
+
+// Get random int between min and max (inclusive)
+random_int :: proc(min: int, max: int) -> int {
+	return min + int(rand.float32() * f32(max - min + 1))
 }

@@ -3,6 +3,9 @@ package flixel
 import "core:fmt"
 import rl "vendor:raylib"
 
+// Global texture cache
+texture_cache: map[string]rl.Texture2D
+
 // Sprite is a visual game object that can be drawn and collided with
 Sprite :: struct {
 	using base:       Object,
@@ -60,6 +63,34 @@ sprite_make_graphic :: proc(sprite: ^Sprite, width: i32, height: i32, color: Col
 	sprite.height = f32(height)
 	sprite.color = color
 	sprite.has_texture = false
+}
+
+// Load a graphic from a file
+sprite_load_graphic :: proc(sprite: ^Sprite, path: string) -> bool {
+	// Check cache first
+	cached_texture, exists := texture_cache[path]
+	if exists {
+		sprite.texture = cached_texture
+		sprite.has_texture = true
+		sprite.width = f32(sprite.texture.width)
+		sprite.height = f32(sprite.texture.height)
+		return true
+	}
+
+	// Load new texture
+	sprite.texture = rl.LoadTexture(cstring(raw_data(path)))
+	if sprite.texture.id == 0 {
+		fmt.println("Warning: Failed to load texture:", path)
+		return false
+	}
+
+	// Cache it
+	texture_cache[path] = sprite.texture
+
+	sprite.has_texture = true
+	sprite.width = f32(sprite.texture.width)
+	sprite.height = f32(sprite.texture.height)
+	return true
 }
 
 // Update sprite physics
@@ -134,7 +165,12 @@ sprite_draw :: proc(obj: ^Object) {
 	}
 
 	if sprite.has_texture {
-		rl.DrawTexture(sprite.texture, i32(sprite.x), i32(sprite.y), rl.WHITE)
+		// Draw with tint color if not white
+		if sprite.color.r == 255 && sprite.color.g == 255 && sprite.color.b == 255 {
+			rl.DrawTexture(sprite.texture, i32(sprite.x), i32(sprite.y), rl.WHITE)
+		} else {
+			rl.DrawTexture(sprite.texture, i32(sprite.x), i32(sprite.y), sprite.color)
+		}
 	} else {
 		// Draw solid color rectangle
 		rl.DrawRectangle(
@@ -150,9 +186,7 @@ sprite_draw :: proc(obj: ^Object) {
 // Destroy sprite
 sprite_destroy :: proc(obj: ^Object) {
 	sprite := cast(^Sprite)obj
-	if sprite.has_texture {
-		rl.UnloadTexture(sprite.texture)
-	}
+	// Don't unload texture - it's cached globally
 	sprite.exists = false
 	free(sprite)
 }
@@ -169,6 +203,15 @@ sprite_revive :: proc(sprite: ^Sprite) {
 	sprite.exists = true
 	sprite.active = true
 	sprite.visible = true
+}
+
+// Reset sprite to a new position and revive it
+sprite_reset :: proc(sprite: ^Sprite, x: f32, y: f32) {
+	sprite.x = x
+	sprite.y = y
+	sprite.velocity = {0, 0}
+	sprite.acceleration = {0, 0}
+	sprite_revive(sprite)
 }
 
 // Check if sprite is touching a direction

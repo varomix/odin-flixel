@@ -13,7 +13,24 @@ group_new :: proc() -> ^Group {
 	group := new(Group)
 	object_init(&group.base, 0, 0, 0, 0)
 	group.members = make([dynamic]^Sprite, 0, 32)
+
+	// Set vtable for group
+	group.base.vtable.update = group_update_obj
+	group.base.vtable.draw = group_draw_obj
+
 	return group
+}
+
+// Update wrapper for vtable
+group_update_obj :: proc(obj: ^Object, dt: f32) {
+	group := cast(^Group)obj
+	group_update(group, dt)
+}
+
+// Draw wrapper for vtable
+group_draw_obj :: proc(obj: ^Object) {
+	group := cast(^Group)obj
+	group_draw(group)
 }
 
 // Add a sprite to the group
@@ -41,7 +58,7 @@ group_update :: proc(group: ^Group, dt: f32) {
 
 	for member in group.members {
 		if member.exists && member.active {
-			sprite_update(member, dt)
+			member.base.vtable.update(&member.base, dt)
 		}
 	}
 }
@@ -89,6 +106,15 @@ group_get_first_available :: proc(group: ^Group) -> ^Sprite {
 		}
 	}
 	return nil
+}
+
+// Recycle a sprite from the group (get first dead sprite and revive it)
+group_recycle :: proc(group: ^Group) -> ^Sprite {
+	sprite := group_get_first_available(group)
+	if sprite != nil {
+		sprite_revive(sprite)
+	}
+	return sprite
 }
 
 // Get first existing (alive) member
