@@ -69,6 +69,9 @@ init :: proc(
 	// Initialize texture cache
 	texture_cache = make(map[string]rl.Texture2D)
 
+	// Initialize the quick text queue
+	quick_text_queue = make([dynamic]QuickText, 0, 16)
+
 	// Load custom font - try multiple paths to find it
 	load_default_font()
 
@@ -133,6 +136,9 @@ run :: proc(g: ^Game) {
 				}
 			}
 
+			// Draw all the quick text
+			draw_quick_text()
+
 			rl.EndTextureMode()
 
 			// Draw scaled texture to screen
@@ -158,8 +164,14 @@ run :: proc(g: ^Game) {
 				}
 			}
 
+			// Draw all the quick text
+			draw_quick_text()
+
 			rl.EndDrawing()
 		}
+
+		// Clear the quick text queue for the next frame
+		clear(&quick_text_queue)
 	}
 
 	// Cleanup
@@ -184,7 +196,35 @@ run :: proc(g: ^Game) {
 	}
 	delete(texture_cache)
 
+	// Clear the quick text queue
+	delete(quick_text_queue)
+
 	rl.CloseWindow()
+}
+
+// Draw all the text in the quick text queue
+draw_quick_text :: proc() {
+	for entry in quick_text_queue {
+		// Use custom font if loaded
+		if font_loaded {
+			rl.DrawTextEx(
+				custom_font,
+				cstring(raw_data(entry.text)),
+				{entry.x, entry.y},
+				f32(entry.font_size),
+				font_spacing,
+				entry.color,
+			)
+		} else {
+			rl.DrawText(
+				cstring(raw_data(entry.text)),
+				i32(entry.x),
+				i32(entry.y),
+				entry.font_size,
+				entry.color,
+			)
+		}
+	}
 }
 
 // Set background color
@@ -202,10 +242,10 @@ quit :: proc() {
 // Load the default font, searching multiple paths
 load_default_font :: proc() {
 	// Try multiple paths to find the font
-	paths := []string{
-		"flixel/data/nokiafc22.ttf",      // From root directory
+	paths := []string {
+		"flixel/data/nokiafc22.ttf", // From root directory
 		"../../flixel/data/nokiafc22.ttf", // From examples subdirectories
-		"../flixel/data/nokiafc22.ttf",    // From one level up
+		"../flixel/data/nokiafc22.ttf", // From one level up
 	}
 
 	for path in paths {

@@ -17,7 +17,7 @@ menu_state_new :: proc() -> ^MenuState {
 	state := new(MenuState)
 
 	// Setup state with lifecycle callbacks - no manual vtable needed!
-	flx.state_setup(&state.base, menu_state_create, menu_state_update, menu_state_draw)
+	flx.state_setup(&state.base, menu_state_create, menu_state_update)
 
 	state.frame_count = 0
 
@@ -70,21 +70,6 @@ menu_state_update :: proc(state: ^flx.State, dt: f32) {
 
 	// Update all members
 	flx.state_update(&menu.base, dt)
-}
-
-// Draw the menu state
-menu_state_draw :: proc(state: ^flx.State) {
-	menu := cast(^MenuState)state
-
-	// Draw all members
-	for member in menu.members {
-		if member.exists && member.visible {
-			text := cast(^flx.Text)member
-			if text != nil {
-				flx.text_draw(text)
-			}
-		}
-	}
 
 	// Draw additional instructions - one-liner!
 	flx.text_quick(10, 550, "SPACE to play | ESC to quit", 16, flx.GRAY)

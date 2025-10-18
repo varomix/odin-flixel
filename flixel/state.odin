@@ -27,13 +27,19 @@ state_setup :: proc(
 	state: ^State,
 	create_proc: proc(state: ^State),
 	update_proc: proc(state: ^State, dt: f32),
-	draw_proc: proc(state: ^State),
+	draw_proc: proc(state: ^State) = nil, // Optional draw function
 ) {
 	// Allocate and setup vtable internally
 	vtable := new(State_VTable)
 	vtable.create = create_proc
 	vtable.update = update_proc
-	vtable.draw = draw_proc
+
+	// If a custom draw function is provided, use it. Otherwise, use the generic one.
+	if draw_proc != nil {
+		vtable.draw = draw_proc
+	} else {
+		vtable.draw = state_draw // Default draw
+	}
 
 	state.vtable = vtable
 	state.members = make([dynamic]^Object, 0, 16)

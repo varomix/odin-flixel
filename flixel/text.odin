@@ -3,6 +3,18 @@ package flixel
 import "core:fmt"
 import rl "vendor:raylib"
 
+// A struct to hold all the info for a quick text draw call
+QuickText :: struct {
+	x:         f32,
+	y:         f32,
+	text:      string,
+	font_size: i32,
+	color:     Color,
+}
+
+// A queue to hold all the quick text draw calls for the current frame
+quick_text_queue: [dynamic]QuickText
+
 // Text alignment options
 TextAlignment :: enum {
 	LEFT,
@@ -158,17 +170,6 @@ text_set_alignment :: proc(txt: ^Text, alignment: TextAlignment) {
 // Quick text drawing - one-liner for simple text rendering
 // This is useful for debug text or UI that doesn't need to be part of the state
 text_quick :: proc(x, y: f32, text: string, font_size: i32 = 20, color: Color = WHITE) {
-	// Use custom font if loaded
-	if font_loaded {
-		rl.DrawTextEx(
-			custom_font,
-			cstring(raw_data(text)),
-			{x, y},
-			f32(font_size),
-			font_spacing,
-			color,
-		)
-	} else {
-		rl.DrawText(cstring(raw_data(text)), i32(x), i32(y), font_size, color)
-	}
+	// Add the text to the queue to be drawn at the end of the frame
+	append(&quick_text_queue, QuickText{x, y, text, font_size, color})
 }

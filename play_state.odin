@@ -13,7 +13,7 @@ play_state_new :: proc() -> ^PlayState {
 	state := new(PlayState)
 
 	// Setup state with lifecycle callbacks - no manual vtable needed!
-	flx.state_setup(&state.base, play_state_create, play_state_update, play_state_draw)
+	flx.state_setup(&state.base, play_state_create, play_state_update)
 
 	return state
 }
@@ -43,22 +43,6 @@ play_state_update :: proc(state: ^flx.State, dt: f32) {
 	flx.state_update(&play.base, dt)
 
 	// Custom update logic can go here
-}
-
-// Draw the state
-play_state_draw :: proc(state: ^flx.State) {
-	play := cast(^PlayState)state
-
-	// Draw all members
-	for member in play.members {
-		if member.exists && member.visible {
-			// Check if it's a Text and draw it appropriately
-			text := cast(^flx.Text)member
-			if text != nil {
-				flx.text_draw(text)
-			}
-		}
-	}
 
 	// Draw instructions - one-liner!
 	flx.text_quick(10, 570, "ESC to return to menu", 16, flx.GRAY)
