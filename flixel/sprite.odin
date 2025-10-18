@@ -6,6 +6,20 @@ import rl "vendor:raylib"
 // Global texture cache
 texture_cache: map[string]rl.Texture2D
 
+// Animation frame data
+AnimationFrame :: struct {
+	frame_index: i32,
+	duration:    f32,
+}
+
+// Animation data
+Animation :: struct {
+	name:         string,
+	frames:       [dynamic]AnimationFrame,
+	frame_rate:   f32,
+	loop:         bool,
+}
+
 // Sprite is a visual game object that can be drawn and collided with
 Sprite :: struct {
 	using base:       Object,
@@ -14,6 +28,16 @@ Sprite :: struct {
 	texture:          rl.Texture2D,
 	has_texture:      bool,
 	color:            Color,
+
+	// Animation
+	animations:       map[string]^Animation,
+	current_animation: ^Animation,
+	current_frame:    i32,
+	frame_timer:      f32,
+	frame_width:      f32,
+	frame_height:     f32,
+	frames_per_row:   i32,
+	playing:          bool,
 
 	// Physics
 	max_velocity:     rl.Vector2,
@@ -48,6 +72,16 @@ sprite_new :: proc(x: f32 = 0, y: f32 = 0) -> ^Sprite {
 	sprite.touching = COLLISION_NONE
 	sprite.was_touching = COLLISION_NONE
 	sprite.allow_collisions = COLLISION_ANY
+
+	// Initialize animation fields
+	sprite.animations = make(map[string]^Animation)
+	sprite.current_animation = nil
+	sprite.current_frame = 0
+	sprite.frame_timer = 0
+	sprite.frame_width = 0
+	sprite.frame_height = 0
+	sprite.frames_per_row = 0
+	sprite.playing = false
 
 	// Override vtable for sprite
 	sprite.vtable.update = sprite_update
@@ -93,11 +127,80 @@ sprite_load_graphic :: proc(sprite: ^Sprite, path: string) -> bool {
 	return true
 }
 
+// Load an animated graphic from a file with frame dimensions
+sprite_load_animated_graphic :: proc(sprite: ^Sprite, path: string, frame_width: i32, frame_height: i32) -> bool {
+	if !sprite_load_graphic(sprite, path) {
+		return false
+	}
+
+	// Set up animation frame dimensions
+	sprite.frame_width = f32(frame_width)
+	sprite.frame_height = f32(frame_height)
+	sprite.frames_per_row = i32(sprite.texture.width) / frame_width
+
+	// Update sprite dimensions to match frame size
+	sprite.width = sprite.frame_width
+	sprite.height = sprite.frame_height
+
+	return true
+}
+
+// Add an animation to the sprite
+sprite_add_animation :: proc(sprite: ^Sprite, name: string, frames: []i32, frame_rate: f32, loop: bool = true) {
+	animation := new(Animation)
+	animation.name = name
+	animation.frame_rate = frame_rate
+	animation.loop = loop
+	animation.frames = make([dynamic]AnimationFrame, 0, len(frames))
+
+	// Create frames with equal duration
+	frame_duration := 1.0 / frame_rate
+	for frame_index in frames {
+		frame := AnimationFrame{frame_index, frame_duration}
+		append(&animation.frames, frame)
+	}
+
+	sprite.animations[name] = animation
+}
+
+// Play an animation by name
+sprite_play :: proc(sprite: ^Sprite, name: string) {
+	if animation, exists := sprite.animations[name]; exists {
+		sprite.current_animation = animation
+		sprite.current_frame = 0
+		sprite.frame_timer = 0
+		sprite.playing = true
+	}
+}
+
+// Stop the current animation
+sprite_stop :: proc(sprite: ^Sprite) {
+	sprite.playing = false
+}
+
 // Update sprite physics
 sprite_update :: proc(obj: ^Object, dt: f32) {
 	sprite := cast(^Sprite)obj
 	if !sprite.active || !sprite.exists {
 		return
+	}
+
+	// Update animation
+	if sprite.playing && sprite.current_animation != nil {
+		sprite.frame_timer += dt
+		if sprite.frame_timer >= sprite.current_animation.frames[sprite.current_frame].duration {
+			sprite.frame_timer = 0
+			sprite.current_frame += 1
+			
+			if sprite.current_frame >= i32(len(sprite.current_animation.frames)) {
+				if sprite.current_animation.loop {
+					sprite.current_frame = 0
+				} else {
+					sprite.current_frame = i32(len(sprite.current_animation.frames)) - 1
+					sprite.playing = false
+				}
+			}
+		}
 	}
 
 	// Store previous touching state
@@ -165,11 +268,27 @@ sprite_draw :: proc(obj: ^Object) {
 	}
 
 	if sprite.has_texture {
-		// Draw with tint color if not white
-		if sprite.color.r == 255 && sprite.color.g == 255 && sprite.color.b == 255 {
-			rl.DrawTexture(sprite.texture, i32(sprite.x), i32(sprite.y), rl.WHITE)
+		if sprite.current_animation != nil && sprite.frame_width > 0 && sprite.frame_height > 0 {
+			// Draw animated sprite with frame clipping
+			frame_index := sprite.current_animation.frames[sprite.current_frame].frame_index
+			frame_x := f32(frame_index % sprite.frames_per_row) * sprite.frame_width
+			frame_y := f32(frame_index / sprite.frames_per_row) * sprite.frame_height
+			
+			source_rect := rl.Rectangle{frame_x, frame_y, sprite.frame_width, sprite.frame_height}
+			dest_rect := rl.Rectangle{sprite.x, sprite.y, sprite.frame_width, sprite.frame_height}
+			
+			if sprite.color.r == 255 && sprite.color.g == 255 && sprite.color.b == 255 {
+				rl.DrawTexturePro(sprite.texture, source_rect, dest_rect, {0, 0}, 0, rl.WHITE)
+			} else {
+				rl.DrawTexturePro(sprite.texture, source_rect, dest_rect, {0, 0}, 0, sprite.color)
+			}
 		} else {
-			rl.DrawTexture(sprite.texture, i32(sprite.x), i32(sprite.y), sprite.color)
+			// Draw static sprite
+			if sprite.color.r == 255 && sprite.color.g == 255 && sprite.color.b == 255 {
+				rl.DrawTexture(sprite.texture, i32(sprite.x), i32(sprite.y), rl.WHITE)
+			} else {
+				rl.DrawTexture(sprite.texture, i32(sprite.x), i32(sprite.y), sprite.color)
+			}
 		}
 	} else {
 		// Draw solid color rectangle
@@ -186,6 +305,14 @@ sprite_draw :: proc(obj: ^Object) {
 // Destroy sprite
 sprite_destroy :: proc(obj: ^Object) {
 	sprite := cast(^Sprite)obj
+	
+	// Clean up animation data
+	for name, animation in sprite.animations {
+		delete(animation.frames)
+		free(animation)
+	}
+	delete(sprite.animations)
+	
 	// Don't unload texture - it's cached globally
 	sprite.exists = false
 	free(sprite)

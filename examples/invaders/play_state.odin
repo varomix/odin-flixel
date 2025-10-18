@@ -1,6 +1,5 @@
 package main
 
-import "core:fmt"
 import flx "../../flixel"
 
 // PlayState is the main game state for Flx Invaders
@@ -95,6 +94,7 @@ play_state_create :: proc(state: ^flx.State) {
 		16,
 		flx.WHITE,
 	)
+	flx.text_set_alignment(play.status_text, .CENTER)
 	flx.state_add(&play.base, &play.status_text.base)
 }
 
@@ -117,19 +117,29 @@ play_state_update :: proc(state: ^flx.State, dt: f32) {
 	for bullet in play.player_bullets.members {
 		if !bullet.exists do continue
 
+		// Kill bullets that go off-screen
+		if bullet.y < -bullet.height || bullet.y > f32(flx.get_height()) {
+			flx.sprite_kill(bullet)
+			continue
+		}
+
 		// Check vs aliens
 		for alien in play.aliens.members {
 			if alien.exists && flx.sprites_overlap(bullet, alien) {
 				flx.sprite_kill(bullet)
 				flx.sprite_kill(alien)
+				break // Stop checking this bullet against other aliens
 			}
 		}
 
-		// Check vs shields
-		for shield in play.shields.members {
-			if shield.exists && flx.sprites_overlap(bullet, shield) {
-				flx.sprite_kill(bullet)
-				flx.sprite_kill(shield)
+		// Only check vs shields if bullet still exists
+		if bullet.exists {
+			for shield in play.shields.members {
+				if shield.exists && flx.sprites_overlap(bullet, shield) {
+					flx.sprite_kill(bullet)
+					flx.sprite_kill(shield)
+					break // Stop checking this bullet against other shields
+				}
 			}
 		}
 	}
@@ -138,17 +148,26 @@ play_state_update :: proc(state: ^flx.State, dt: f32) {
 	for bullet in play.alien_bullets.members {
 		if !bullet.exists do continue
 
+		// Kill bullets that go off-screen
+		if bullet.y < -bullet.height || bullet.y > f32(flx.get_height()) {
+			flx.sprite_kill(bullet)
+			continue
+		}
+
 		// Check vs player
 		if play.player.exists && flx.sprites_overlap(bullet, &play.player.sprite) {
 			flx.sprite_kill(bullet)
 			flx.sprite_kill(&play.player.sprite)
 		}
 
-		// Check vs shields
-		for shield in play.shields.members {
-			if shield.exists && flx.sprites_overlap(bullet, shield) {
-				flx.sprite_kill(bullet)
-				flx.sprite_kill(shield)
+		// Only check vs shields if bullet still exists
+		if bullet.exists {
+			for shield in play.shields.members {
+				if shield.exists && flx.sprites_overlap(bullet, shield) {
+					flx.sprite_kill(bullet)
+					flx.sprite_kill(shield)
+					break // Stop checking this bullet against other shields
+				}
 			}
 		}
 	}

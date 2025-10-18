@@ -3,12 +3,20 @@ package flixel
 import "core:fmt"
 import rl "vendor:raylib"
 
+// Text alignment options
+TextAlignment :: enum {
+	LEFT,
+	CENTER,
+	RIGHT,
+}
+
 // Text is a text rendering object
 Text :: struct {
 	using base:  Object,
 	text:        string,
 	font_size:   i32,
 	color:       Color,
+	alignment:   TextAlignment,
 
 	// Internal text bounds
 	text_width:  f32,
@@ -37,6 +45,12 @@ text_new_with_color :: proc(
 	txt.text = text
 	txt.font_size = font_size
 	txt.color = color
+	txt.alignment = .LEFT
+
+	// Override vtable for text-specific behavior
+	txt.base.vtable.update = text_update_obj
+	txt.base.vtable.draw = text_draw_obj
+	txt.base.vtable.destroy = text_destroy_obj
 
 	// Measure text using custom font
 	font := rl.GetFontDefault()
@@ -56,6 +70,22 @@ text_new :: proc {
 	text_new_with_color,
 }
 
+// VTable wrapper functions
+text_update_obj :: proc(obj: ^Object, dt: f32) {
+	txt := cast(^Text)obj
+	text_update(txt, dt)
+}
+
+text_draw_obj :: proc(obj: ^Object) {
+	txt := cast(^Text)obj
+	text_draw(txt)
+}
+
+text_destroy_obj :: proc(obj: ^Object) {
+	txt := cast(^Text)obj
+	text_destroy(txt)
+}
+
 // Update (text doesn't need updating by default)
 text_update :: proc(txt: ^Text, dt: f32) {
 	if !txt.active || !txt.exists {
@@ -71,18 +101,29 @@ text_draw :: proc(txt: ^Text) {
 		return
 	}
 
+	// Calculate text position based on alignment
+	text_x := txt.x
+	switch txt.alignment {
+	case .LEFT:
+		text_x = txt.x
+	case .CENTER:
+		text_x = txt.x + (txt.width - txt.text_width) / 2
+	case .RIGHT:
+		text_x = txt.x + txt.width - txt.text_width
+	}
+
 	// Use custom font if loaded
 	if font_loaded {
 		rl.DrawTextEx(
 			custom_font,
 			cstring(raw_data(txt.text)),
-			{txt.x, txt.y},
+			{text_x, txt.y},
 			f32(txt.font_size),
 			font_spacing,
 			txt.color,
 		)
 	} else {
-		rl.DrawText(cstring(raw_data(txt.text)), i32(txt.x), i32(txt.y), txt.font_size, txt.color)
+		rl.DrawText(cstring(raw_data(txt.text)), i32(text_x), i32(txt.y), txt.font_size, txt.color)
 	}
 }
 
@@ -107,6 +148,11 @@ text_set_text :: proc(txt: ^Text, text: string) {
 // Helper to change color
 text_set_color :: proc(txt: ^Text, color: Color) {
 	txt.color = color
+}
+
+// Helper to set alignment
+text_set_alignment :: proc(txt: ^Text, alignment: TextAlignment) {
+	txt.alignment = alignment
 }
 
 // Quick text drawing - one-liner for simple text rendering

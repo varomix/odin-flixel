@@ -15,12 +15,19 @@ alien_new :: proc(x: f32, y: f32, color: flx.Color, bullets: ^flx.Group) -> ^Ali
 	alien := new(Alien)
 
 	alien.sprite = flx.sprite_new(x, y)^
-	flx.sprite_load_graphic(&alien.sprite, "alien.png")
+	// Load animated graphic - alien.png is 48x16 with 3 frames of 16x16 each
+	flx.sprite_load_animated_graphic(&alien.sprite, "alien.png", 16, 16)
 	alien.sprite.color = color
 
 	alien.original_x = x
 	alien.bullets = bullets
 	alien.shot_clock = 1 + flx.random() * 10
+
+	// Create animation - frames [0,1,0,2] at 6-10 FPS (randomized)
+	frame_rate := 6 + flx.random() * 4
+	frames := []i32{0, 1, 0, 2}
+	flx.sprite_add_animation(&alien.sprite, "Default", frames, frame_rate, true)
+	flx.sprite_play(&alien.sprite, "Default")
 
 	// Start moving right
 	alien.velocity.x = 10

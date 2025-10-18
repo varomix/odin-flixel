@@ -67,6 +67,9 @@ fi
 # Build
 echo -e "${YELLOW}🔨 Building in $BUILD_MODE mode...${NC}"
 
+# Add Odin to PATH
+export PATH="/Users/varomix/dev/ODIN_DEV/Odin:$PATH"
+
 if [ "$BUILD_MODE" = "release" ]; then
     odin build . -o:speed -no-bounds-check
 else
