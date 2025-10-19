@@ -26,6 +26,9 @@ Game :: struct {
 
 	// Quit flag
 	should_quit:   bool,
+
+	// Main camera
+	camera:        ^Camera,
 }
 
 // Global game instance
@@ -56,6 +59,9 @@ init :: proc(
 
 	// Set global reference
 	game = g
+
+	// Create camera
+	g.camera = camera_new()
 
 	// Initialize Raylib with scaled window size
 	window_width := width * scale
@@ -114,6 +120,8 @@ run :: proc(g: ^Game) {
 		dt := rl.GetFrameTime()
 
 		// Update
+		camera_update(g.camera, dt)
+
 		if g.state != nil {
 			if g.state.vtable != nil && g.state.vtable.update != nil {
 				g.state.vtable.update(g.state, dt)
@@ -128,6 +136,7 @@ run :: proc(g: ^Game) {
 			rl.BeginTextureMode(g.render_target)
 			rl.ClearBackground(g.bg_color)
 
+			rl.BeginMode2D(g.camera.rl_camera)
 			if g.state != nil {
 				if g.state.vtable != nil && g.state.vtable.draw != nil {
 					g.state.vtable.draw(g.state)
@@ -135,6 +144,7 @@ run :: proc(g: ^Game) {
 					state_draw(g.state)
 				}
 			}
+			rl.EndMode2D()
 
 			// Draw all the quick text
 			draw_quick_text()
@@ -156,6 +166,7 @@ run :: proc(g: ^Game) {
 			rl.BeginDrawing()
 			rl.ClearBackground(g.bg_color)
 
+			rl.BeginMode2D(g.camera.rl_camera)
 			if g.state != nil {
 				if g.state.vtable != nil && g.state.vtable.draw != nil {
 					g.state.vtable.draw(g.state)
@@ -163,10 +174,10 @@ run :: proc(g: ^Game) {
 					state_draw(g.state)
 				}
 			}
+			rl.EndMode2D()
 
 			// Draw all the quick text
 			draw_quick_text()
-
 			rl.EndDrawing()
 		}
 

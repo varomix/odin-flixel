@@ -377,3 +377,10 @@ random_range :: proc(min: f32, max: f32) -> f32 {
 random_int :: proc(min: int, max: int) -> int {
 	return min + int(rand.float32() * f32(max - min + 1))
 }
+
+// Shake the camera
+shake :: proc(intensity: f32 = 0.05, duration: f32 = 0.5) {
+	if game != nil && game.camera != nil {
+		camera_shake(game.camera, intensity, duration)
+	}
+}

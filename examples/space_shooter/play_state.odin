@@ -51,6 +51,7 @@ play_state_update :: proc(state: ^flx.State, dt: f32) {
 	flx.global_update_input()
 
 	flx.overlap(st.aliens, st.bullets, overlap_alien_bullet)
+	flx.overlap(st.aliens, st.player, overlap_alien_player)
 
 	if flx.keys_just_pressed("SPACE") && st.player.active == true {
 		fmt.println("Shooting!!")
@@ -103,5 +104,5 @@ overlap_alien_bullet :: proc(alien: ^flx.Sprite, bullet: ^flx.Sprite) {
 overlap_alien_player :: proc(alien: ^flx.Sprite, player: ^flx.Sprite) {
 	flx.sprite_kill(player)
 	flx.sprite_kill(alien)
-	// flx.camera.shake(0.02)
+	flx.shake(0.05)
 }
