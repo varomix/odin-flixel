@@ -34,3 +34,6 @@ obj/
 # old resorces
 old_flixel/
 old_flixel_examples/
+flixel/SOUND_USAGE.md
+flixel/STATE_SETUP_GUIDE.md
+ols.json
