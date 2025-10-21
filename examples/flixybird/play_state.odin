@@ -10,9 +10,7 @@ PlayState :: struct {
 
 // Create a new play state
 play_state_new :: proc() -> ^PlayState {
-	state := new(PlayState)
-	flx.state_setup(&state.base, play_state_create, play_state_update)
-	return state
+	return flx.state_make(PlayState, play_state_create, play_state_update)
 }
 
 play_state_create :: proc(state: ^flx.State) {
@@ -30,7 +28,6 @@ play_state_create :: proc(state: ^flx.State) {
 	ps.player = flx.sprite_new(f32(flx.get_width() / 3.0), f32(flx.get_height() / 2.0))
 	// flx.sprite_make_graphic(ps.player, player_size.x, player_size.y, flx.GREEN)
 	flx.sprite_load_graphic(ps.player, "sprites/bluebird-midflap.png")
-	ps.player
 	ps.player.max_velocity = {80, 200}
 	ps.player.acceleration.y = 200
 	ps.player.drag.x = ps.player.max_velocity.x * 4

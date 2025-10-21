@@ -15,9 +15,7 @@ Play_State :: struct {
 
 // Create a new play state
 play_state_new :: proc() -> ^Play_State {
-	state := new(Play_State)
-	flx.state_setup(&state.base, play_state_create, play_state_update, play_state_draw)
-	return state
+	return flx.state_make(Play_State, play_state_create, play_state_update, play_state_draw)
 }
 
 // Create callback
@@ -28,7 +26,7 @@ play_state_create :: proc(state: ^flx.State) {
 	if flx.game != nil {
 		flx.set_bg_color(flx.game, flx.Color{170, 170, 170, 255})
 	}
-	
+
 	// odinfmt: disable
 	// Level data (40x30 tiles to fill 320x240 screen at 8x8 tile size)
 	data := [1200]int {

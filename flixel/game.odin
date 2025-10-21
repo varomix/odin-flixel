@@ -78,6 +78,9 @@ init :: proc(
 	// Initialize the quick text queue
 	quick_text_queue = make([dynamic]QuickText, 0, 16)
 
+	// Initialize the sound system
+	sound_system_init()
+
 	// Load custom font - try multiple paths to find it
 	load_default_font()
 
@@ -121,6 +124,9 @@ run :: proc(g: ^Game) {
 
 		// Update
 		camera_update(g.camera, dt)
+
+		// Update music streaming
+		update_music()
 
 		if g.state != nil {
 			if g.state.vtable != nil && g.state.vtable.update != nil {
@@ -209,6 +215,9 @@ run :: proc(g: ^Game) {
 
 	// Clear the quick text queue
 	delete(quick_text_queue)
+
+	// Cleanup sound system
+	sound_system_cleanup()
 
 	rl.CloseWindow()
 }

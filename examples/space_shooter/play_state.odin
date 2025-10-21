@@ -1,7 +1,6 @@
 package spaceshooter
 
 import flx "../../flixel"
-import "core:fmt"
 import "core:math/rand"
 
 PlayState :: struct {
@@ -13,20 +12,33 @@ PlayState :: struct {
 	spawnInterval: f32,
 }
 
-state: PlayState
+// Package-level sounds (accessible by callbacks)
+// This follows the original Flixel pattern where sounds are global
+bullet_sound: ^flx.Sound
+alien_expl_sound: ^flx.Sound
+ship_expl_sound: ^flx.Sound
 
 
 // Create a new play state
 play_state_new :: proc() -> ^PlayState {
-	state := new(PlayState)
-	flx.state_setup(&state.base, play_state_create, play_state_update)
-
-	state.spawnInterval = 2.5
-	return state
+	// Use the convenience function - cleaner!
+	st := flx.state_make(PlayState, play_state_create, play_state_update)
+	st.spawnInterval = 2.5
+	return st
 }
 
 play_state_create :: proc(state: ^flx.State) {
 	st := cast(^PlayState)state
+
+	// Load sounds (package-level, accessible by callbacks)
+	bullet_sound = flx.sound_new()
+	flx.sound_load(bullet_sound, "assets/mp3/Bullet.mp3")
+
+	alien_expl_sound = flx.sound_new()
+	flx.sound_load(alien_expl_sound, "assets/mp3/ExplosionAlien.mp3")
+
+	ship_expl_sound = flx.sound_new()
+	flx.sound_load(ship_expl_sound, "assets/mp3/ExplosionShip.mp3")
 
 	// create player
 	st.player = player_ship()
@@ -36,11 +48,6 @@ play_state_create :: proc(state: ^flx.State) {
 	flx.state_add(&st.base, &st.aliens.base)
 
 	st.bullets = flx.group_new()
-	// for i := 0; i < 10; i += 1 {
-	// 	bullet := bullet()
-	// 	// bullet.exists = false
-	// 	flx.group_add(st.bullets, &bullet.sprite)
-	// }
 	flx.state_add(&st.base, &st.bullets.base)
 
 }
@@ -54,9 +61,9 @@ play_state_update :: proc(state: ^flx.State, dt: f32) {
 	flx.overlap(st.aliens, st.player, overlap_alien_player)
 
 	if flx.keys_just_pressed("SPACE") && st.player.active == true {
-		fmt.println("Shooting!!")
-		// fmt.println("Bullets amount", st.bullets)
 		spawn_bullet(st)
+		// Play bullet sound
+		flx.sound_play(bullet_sound, true)
 	}
 
 	st.spawnTimer -= flx.get_elapsed()
@@ -99,10 +106,14 @@ spawn_bullet :: proc(st: ^PlayState) {
 overlap_alien_bullet :: proc(alien: ^flx.Sprite, bullet: ^flx.Sprite) {
 	flx.sprite_kill(alien)
 	flx.sprite_kill(bullet)
+	// Play alien explosion sound
+	flx.sound_play(alien_expl_sound, true)
 }
 
 overlap_alien_player :: proc(alien: ^flx.Sprite, player: ^flx.Sprite) {
 	flx.sprite_kill(player)
 	flx.sprite_kill(alien)
 	flx.shake(0.05)
+	// Play ship explosion sound
+	flx.sound_play(ship_expl_sound, true)
 }

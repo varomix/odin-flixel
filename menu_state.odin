@@ -14,13 +14,8 @@ MenuState :: struct {
 
 // Create a new MenuState
 menu_state_new :: proc() -> ^MenuState {
-	state := new(MenuState)
-
-	// Setup state with lifecycle callbacks - no manual vtable needed!
-	flx.state_setup(&state.base, menu_state_create, menu_state_update)
-
+	state := flx.state_make(MenuState, menu_state_create, menu_state_update)
 	state.frame_count = 0
-
 	return state
 }
 

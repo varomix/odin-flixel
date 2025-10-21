@@ -17,8 +17,7 @@ PlayState :: struct {
 
 // Create a new PlayState
 play_state_new :: proc() -> ^PlayState {
-	state := new(PlayState)
-	flx.state_setup(&state.base, play_state_create, play_state_update, play_state_draw)
+	state := flx.state_make(PlayState, play_state_create, play_state_update, play_state_draw)
 	state.game_over = false
 	state.game_message = "WELCOME TO FLX INVADERS"
 	return state

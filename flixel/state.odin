@@ -1,8 +1,5 @@
 package flixel
 
-import "core:fmt"
-import rl "vendor:raylib"
-
 // State represents a game state (menu, play, game over, etc.)
 State :: struct {
 	// List of objects in this state
@@ -44,6 +41,14 @@ state_setup :: proc(
 	state.vtable = vtable
 	state.members = make([dynamic]^Object, 0, 16)
 	state.active = true
+}
+
+// Convenience function: Create a state with type inference
+// Usage: state := state_make(MenuState, menu_state_create, menu_state_update)
+state_make :: proc($T: typeid, create_proc: proc(^State), update_proc: proc(^State, f32), draw_proc: proc(^State) = nil) -> ^T {
+	state := new(T)
+	state_setup(&state.base, create_proc, update_proc, draw_proc)
+	return state
 }
 
 // Initialize a new state (used internally, prefer state_setup for user code)
