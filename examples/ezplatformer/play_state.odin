@@ -68,13 +68,13 @@ play_state_create :: proc(state: ^flx.State) {
 	csv_data := flx.tilemap_array_to_csv(data[:], 40)
 	defer delete(csv_data)
 	flx.tilemap_load_map(ps.level, csv_data, 8, 8, flx.AUTO)
-	flx.state_add(&ps.base, cast(^flx.Object)ps.level)
+	flx.state_add_tilemap(ps, ps.level)
 
 	// Create exit (dark gray box, hidden at first)
 	ps.exit = flx.sprite_new(35 * 8 + 1, 25 * 8)
 	flx.sprite_make_graphic(ps.exit, 14, 16, flx.Color{63, 63, 63, 255})
 	ps.exit.exists = false
-	flx.state_add(&ps.base, cast(^flx.Object)ps.exit)
+	flx.state_add(ps, ps.exit)
 
 	// Create coins group
 	ps.coins = flx.group_new()
@@ -127,7 +127,7 @@ play_state_create :: proc(state: ^flx.State) {
 	create_coin(ps, 26, 26)
 	create_coin(ps, 30, 26)
 
-	flx.state_add(&ps.base, cast(^flx.Object)ps.coins)
+	flx.state_add(ps, ps.coins)
 
 	// Create player (red box) - start at middle top of screen (tile 20, 1)
 	ps.player = flx.sprite_new(cast(f32)flx.get_width() / 2.0, 1 * 8)
@@ -135,11 +135,11 @@ play_state_create :: proc(state: ^flx.State) {
 	ps.player.max_velocity = {80, 200}
 	ps.player.acceleration.y = 200
 	ps.player.drag.x = ps.player.max_velocity.x * 4
-	flx.state_add(&ps.base, cast(^flx.Object)ps.player)
+	flx.state_add(ps, ps.player)
 
 	// Create score text
 	ps.score = flx.text_new(2, 2, 80, "SCORE: 0", 10)
-	flx.state_add(&ps.base, cast(^flx.Object)ps.score)
+	flx.state_add(ps, ps.score)
 
 	// Create status text
 	status_text := "Collect coins."
@@ -147,7 +147,7 @@ play_state_create :: proc(state: ^flx.State) {
 		status_text = "Aww, you died!"
 	}
 	ps.status = flx.text_new(f32(flx.get_width()) - 162, 2, 160, status_text, 10)
-	flx.state_add(&ps.base, cast(^flx.Object)ps.status)
+	flx.state_add(ps, ps.status)
 }
 
 // Create a coin at tile position

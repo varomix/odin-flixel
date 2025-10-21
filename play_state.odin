@@ -24,7 +24,7 @@ play_state_create :: proc(state: ^flx.State) {
 
 	// Add a text field at position 0,0 with width 100
 	text := flx.text_new(200, 200, 100, "You are in the Play State!")
-	flx.state_add(&play.base, &text.base)
+	flx.state_add(play, text)
 }
 
 // Update the state
@@ -35,7 +35,7 @@ play_state_update :: proc(state: ^flx.State, dt: f32) {
 	if flx.key_pressed(.ESCAPE) {
 		fmt.println("Returning to Menu State...")
 		menu := menu_state_new()
-		flx.switch_state(flx.game, &menu.base)
+		flx.switch_state(flx.game, menu)
 		return
 	}
 

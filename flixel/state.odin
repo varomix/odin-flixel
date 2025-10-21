@@ -1,5 +1,7 @@
 package flixel
 
+import "base:intrinsics"
+
 // State represents a game state (menu, play, game over, etc.)
 State :: struct {
 	// List of objects in this state
@@ -43,9 +45,15 @@ state_setup :: proc(
 	state.active = true
 }
 
-// Convenience function: Create a state with type inference
+// Convenience function: Create a state with simpler setup
 // Usage: state := state_make(MenuState, menu_state_create, menu_state_update)
-state_make :: proc($T: typeid, create_proc: proc(^State), update_proc: proc(^State, f32), draw_proc: proc(^State) = nil) -> ^T {
+// Note: Callbacks still use ^State but you cast once at the top of your function
+state_make :: proc(
+	$T: typeid,
+	create_proc: proc(_: ^State),
+	update_proc: proc(_: ^State, _: f32),
+	draw_proc: proc(_: ^State) = nil,
+) -> ^T {
 	state := new(T)
 	state_setup(&state.base, create_proc, update_proc, draw_proc)
 	return state
@@ -57,9 +65,53 @@ state_init :: proc(state: ^State) {
 	state.active = true
 }
 
-// Add an object to the state
-state_add :: proc(state: ^State, obj: ^Object) -> ^Object {
+// Add an object to the state (overloaded for common types)
+state_add :: proc {
+	state_add_object,
+	state_add_sprite,
+	state_add_text,
+	state_add_group,
+	state_add_tilemap,
+	state_add_to_custom_state,
+}
+
+// Add a raw Object to the state
+state_add_object :: proc(state: ^State, obj: ^Object) -> ^Object {
 	append(&state.members, obj)
+	return obj
+}
+
+// Add a Sprite to the state (automatically extracts the base)
+state_add_sprite :: proc(state: ^State, sprite: ^Sprite) -> ^Sprite {
+	append(&state.members, &sprite.base)
+	return sprite
+}
+
+// Add a Text to the state (automatically extracts the base)
+state_add_text :: proc(state: ^State, text: ^Text) -> ^Text {
+	append(&state.members, &text.base)
+	return text
+}
+
+// Add a Group to the state (automatically extracts the base)
+state_add_group :: proc(state: ^State, group: ^Group) -> ^Group {
+	append(&state.members, &group.base)
+	return group
+}
+
+// Add a Tilemap to the state (automatically extracts the base)
+state_add_tilemap :: proc(state: ^State, tilemap: ^Tilemap) -> ^Tilemap {
+	append(&state.members, &tilemap.base)
+	return tilemap
+}
+
+// Generic add for custom state types (works with MenuState, PlayState, etc.)
+// This allows: state_add(menu, obj) instead of state_add(&menu.base, obj)
+state_add_to_custom_state :: proc(state: ^$T, obj: ^$O) -> ^O {
+	// Since the custom state uses "using base: State", we can access members directly
+	// The cast is needed to make Odin understand the type relationship
+	base_state := cast(^State)state
+	append(&base_state.members, &obj.base)
 	return obj
 }
 

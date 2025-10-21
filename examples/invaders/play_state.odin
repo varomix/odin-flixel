@@ -38,11 +38,11 @@ play_state_create :: proc(state: ^flx.State) {
 		bullet.exists = false
 		flx.group_add(play.player_bullets, bullet)
 	}
-	flx.state_add(&play.base, &play.player_bullets.base)
+	flx.state_add(play, play.player_bullets)
 
 	// Create player ship
 	play.player = player_ship_new(play.player_bullets)
-	flx.state_add(&play.base, &play.player.sprite.base)
+	flx.state_add(play, &play.player.sprite)
 
 	// Create alien bullets (32 bullets to recycle)
 	play.alien_bullets = flx.group_new()
@@ -52,7 +52,7 @@ play_state_create :: proc(state: ^flx.State) {
 		bullet.exists = false
 		flx.group_add(play.alien_bullets, bullet)
 	}
-	flx.state_add(&play.base, &play.alien_bullets.base)
+	flx.state_add(play, play.alien_bullets)
 
 	// Create aliens (5 rows of 10)
 	play.aliens = flx.group_new()
@@ -70,7 +70,7 @@ play_state_create :: proc(state: ^flx.State) {
 		alien := alien_new(x, y, color, play.alien_bullets)
 		flx.group_add(play.aliens, alien)
 	}
-	flx.state_add(&play.base, &play.aliens.base)
+	flx.state_add(play, play.aliens)
 
 	// Create shields (4 shields, each made of 16 blocks)
 	play.shields = flx.group_new()
@@ -82,7 +82,7 @@ play_state_create :: proc(state: ^flx.State) {
 		shield.active = false
 		flx.group_add(play.shields, shield)
 	}
-	flx.state_add(&play.base, &play.shields.base)
+	flx.state_add(play, play.shields)
 
 	// Create status text
 	play.status_text = flx.text_new(
@@ -94,7 +94,7 @@ play_state_create :: proc(state: ^flx.State) {
 		flx.WHITE,
 	)
 	flx.text_set_alignment(play.status_text, .CENTER)
-	flx.state_add(&play.base, &play.status_text.base)
+	flx.state_add(play, play.status_text)
 }
 
 // Collision callback for player bullets hitting aliens

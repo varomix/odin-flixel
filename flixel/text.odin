@@ -1,6 +1,5 @@
 package flixel
 
-import "core:fmt"
 import rl "vendor:raylib"
 
 // A struct to hold all the info for a quick text draw call
@@ -24,15 +23,21 @@ TextAlignment :: enum {
 
 // Text is a text rendering object
 Text :: struct {
-	using base:  Object,
-	text:        string,
-	font_size:   i32,
-	color:       Color,
-	alignment:   TextAlignment,
+	using base:    Object,
+	text:          string,
+	font_size:     i32,
+	color:         Color,
+	alignment:     TextAlignment,
 
 	// Internal text bounds
-	text_width:  f32,
-	text_height: f32,
+	text_width:    f32,
+	text_height:   f32,
+
+	// Blinking properties
+	blink_enabled: bool,
+	blink_rate:    f32, // How fast to blink (times per second)
+	blink_timer:   f32, // Internal timer for blinking
+	blink_visible: bool, // Current blink state
 }
 
 // Constructor with default color
@@ -98,13 +103,22 @@ text_destroy_obj :: proc(obj: ^Object) {
 	text_destroy(txt)
 }
 
-// Update (text doesn't need updating by default)
+// Update text (handles blinking)
 text_update :: proc(txt: ^Text, dt: f32) {
 	if !txt.active || !txt.exists {
 		return
 	}
-	// Text objects don't typically need physics updates
-	// but we keep this for consistency
+
+	// Handle blinking
+	if txt.blink_enabled {
+		txt.blink_timer += dt
+		blink_interval := 1.0 / txt.blink_rate
+		if txt.blink_timer >= blink_interval {
+			txt.blink_timer = 0
+			txt.blink_visible = !txt.blink_visible
+			txt.visible = txt.blink_visible
+		}
+	}
 }
 
 // Draw the text
@@ -165,6 +179,21 @@ text_set_color :: proc(txt: ^Text, color: Color) {
 // Helper to set alignment
 text_set_alignment :: proc(txt: ^Text, alignment: TextAlignment) {
 	txt.alignment = alignment
+}
+
+// Enable blinking on text
+text_enable_blink :: proc(txt: ^Text, rate: f32 = 2.0) {
+	txt.blink_enabled = true
+	txt.blink_rate = rate
+	txt.blink_timer = 0
+	txt.blink_visible = true
+	txt.visible = true
+}
+
+// Disable blinking on text
+text_disable_blink :: proc(txt: ^Text) {
+	txt.blink_enabled = false
+	txt.visible = true
 }
 
 // Quick text drawing - one-liner for simple text rendering

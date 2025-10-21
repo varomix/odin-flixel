@@ -22,7 +22,7 @@ play_state_create :: proc(state: ^flx.State) {
 
 	// Create score
 	ps.score = flx.text_new(2, 2, 80, "SCORE: 0", 10)
-	flx.state_add(&ps.base, cast(^flx.Object)ps.score)
+	flx.state_add(ps, ps.score)
 
 	// Create player
 	ps.player = flx.sprite_new(f32(flx.get_width() / 3.0), f32(flx.get_height() / 2.0))
@@ -32,7 +32,7 @@ play_state_create :: proc(state: ^flx.State) {
 	ps.player.acceleration.y = 200
 	ps.player.drag.x = ps.player.max_velocity.x * 4
 
-	flx.state_add(&ps.base, cast(^flx.Object)ps.player)
+	flx.state_add(ps, ps.player)
 }
 
 play_state_update :: proc(state: ^flx.State, dt: f32) {

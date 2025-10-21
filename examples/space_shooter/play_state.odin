@@ -42,13 +42,13 @@ play_state_create :: proc(state: ^flx.State) {
 
 	// create player
 	st.player = player_ship()
-	flx.state_add(&st.base, &st.player.sprite.base)
+	flx.state_add(st, &st.player.sprite)
 
 	st.aliens = flx.group_new()
-	flx.state_add(&st.base, &st.aliens.base)
+	flx.state_add(st, st.aliens)
 
 	st.bullets = flx.group_new()
-	flx.state_add(&st.base, &st.bullets.base)
+	flx.state_add(st, st.bullets)
 
 }
 

@@ -1,5 +1,6 @@
 package flixel
 
+import "base:intrinsics"
 import "core:fmt"
 import rl "vendor:raylib"
 
@@ -98,8 +99,14 @@ init :: proc(
 	return g
 }
 
-// Switch to a new state
-switch_state :: proc(g: ^Game, new_state: ^State) {
+// Switch to a new state (overloaded for convenience)
+switch_state :: proc {
+	switch_state_base,
+	switch_state_custom,
+}
+
+// Switch to a new state (base implementation)
+switch_state_base :: proc(g: ^Game, new_state: ^State) {
 	// Destroy old state if it exists
 	if g.state != nil {
 		state_destroy(g.state)
@@ -115,6 +122,12 @@ switch_state :: proc(g: ^Game, new_state: ^State) {
 			g.state.vtable.create(g.state)
 		}
 	}
+}
+
+// Switch to a new state (custom state type)
+// Allows: switch_state(game, menu) instead of switch_state(game, &menu.base)
+switch_state_custom :: proc(g: ^Game, new_state: ^$T) where intrinsics.type_has_field(T, "base") {
+	switch_state_base(g, &new_state.base)
 }
 
 // Run the game loop
