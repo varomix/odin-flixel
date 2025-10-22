@@ -4,6 +4,9 @@ import "core:fmt"
 import "core:math/rand"
 import rl "vendor:raylib"
 
+// Native vector type (not dependent on raylib)
+Vec2 :: [2]f32
+
 // Global game utilities and state
 Global :: struct {
 	score:    int,

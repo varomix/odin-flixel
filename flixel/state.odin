@@ -72,6 +72,7 @@ state_add :: proc {
 	state_add_text,
 	state_add_group,
 	state_add_tilemap,
+	state_add_emitter,
 	state_add_to_custom_state,
 }
 
@@ -105,6 +106,11 @@ state_add_tilemap :: proc(state: ^State, tilemap: ^Tilemap) -> ^Tilemap {
 	return tilemap
 }
 
+// Add an Emitter to the state (automatically extracts the base)
+state_add_emitter :: proc(state: ^State, emitter: ^Emitter) -> ^Emitter {
+	append(&state.members, &emitter.base)
+	return emitter
+}
 // Generic add for custom state types (works with MenuState, PlayState, etc.)
 // This allows: state_add(menu, obj) instead of state_add(&menu.base, obj)
 state_add_to_custom_state :: proc(state: ^$T, obj: ^$O) -> ^O {

@@ -14,39 +14,39 @@ AnimationFrame :: struct {
 
 // Animation data
 Animation :: struct {
-	name:         string,
-	frames:       [dynamic]AnimationFrame,
-	frame_rate:   f32,
-	loop:         bool,
+	name:       string,
+	frames:     [dynamic]AnimationFrame,
+	frame_rate: f32,
+	loop:       bool,
 }
 
 // Sprite is a visual game object that can be drawn and collided with
 Sprite :: struct {
-	using base:       Object,
+	using base:        Object,
 
 	// Graphics
-	texture:          rl.Texture2D,
-	has_texture:      bool,
-	color:            Color,
+	texture:           rl.Texture2D,
+	has_texture:       bool,
+	color:             Color,
 
 	// Animation
-	animations:       map[string]^Animation,
+	animations:        map[string]^Animation,
 	current_animation: ^Animation,
-	current_frame:    i32,
-	frame_timer:      f32,
-	frame_width:      f32,
-	frame_height:     f32,
-	frames_per_row:   i32,
-	playing:          bool,
+	current_frame:     i32,
+	frame_timer:       f32,
+	frame_width:       f32,
+	frame_height:      f32,
+	frames_per_row:    i32,
+	playing:           bool,
 
 	// Physics
-	max_velocity:     rl.Vector2,
-	drag:             rl.Vector2,
+	max_velocity:      Vec2,
+	drag:              Vec2,
 
 	// Collision flags
-	touching:         u32,
-	was_touching:     u32,
-	allow_collisions: u32,
+	touching:          u32,
+	was_touching:      u32,
+	allow_collisions:  u32,
 }
 
 // Collision direction flags
@@ -128,7 +128,12 @@ sprite_load_graphic :: proc(sprite: ^Sprite, path: string) -> bool {
 }
 
 // Load an animated graphic from a file with frame dimensions
-sprite_load_animated_graphic :: proc(sprite: ^Sprite, path: string, frame_width: i32, frame_height: i32) -> bool {
+sprite_load_animated_graphic :: proc(
+	sprite: ^Sprite,
+	path: string,
+	frame_width: i32,
+	frame_height: i32,
+) -> bool {
 	if !sprite_load_graphic(sprite, path) {
 		return false
 	}
@@ -146,7 +151,13 @@ sprite_load_animated_graphic :: proc(sprite: ^Sprite, path: string, frame_width:
 }
 
 // Add an animation to the sprite
-sprite_add_animation :: proc(sprite: ^Sprite, name: string, frames: []i32, frame_rate: f32, loop: bool = true) {
+sprite_add_animation :: proc(
+	sprite: ^Sprite,
+	name: string,
+	frames: []i32,
+	frame_rate: f32,
+	loop: bool = true,
+) {
 	animation := new(Animation)
 	animation.name = name
 	animation.frame_rate = frame_rate
@@ -191,7 +202,7 @@ sprite_update :: proc(obj: ^Object, dt: f32) {
 		if sprite.frame_timer >= sprite.current_animation.frames[sprite.current_frame].duration {
 			sprite.frame_timer = 0
 			sprite.current_frame += 1
-			
+
 			if sprite.current_frame >= i32(len(sprite.current_animation.frames)) {
 				if sprite.current_animation.loop {
 					sprite.current_frame = 0
@@ -273,10 +284,10 @@ sprite_draw :: proc(obj: ^Object) {
 			frame_index := sprite.current_animation.frames[sprite.current_frame].frame_index
 			frame_x := f32(frame_index % sprite.frames_per_row) * sprite.frame_width
 			frame_y := f32(frame_index / sprite.frames_per_row) * sprite.frame_height
-			
+
 			source_rect := rl.Rectangle{frame_x, frame_y, sprite.frame_width, sprite.frame_height}
 			dest_rect := rl.Rectangle{sprite.x, sprite.y, sprite.frame_width, sprite.frame_height}
-			
+
 			if sprite.color.r == 255 && sprite.color.g == 255 && sprite.color.b == 255 {
 				rl.DrawTexturePro(sprite.texture, source_rect, dest_rect, {0, 0}, 0, rl.WHITE)
 			} else {
@@ -305,14 +316,14 @@ sprite_draw :: proc(obj: ^Object) {
 // Destroy sprite
 sprite_destroy :: proc(obj: ^Object) {
 	sprite := cast(^Sprite)obj
-	
+
 	// Clean up animation data
 	for name, animation in sprite.animations {
 		delete(animation.frames)
 		free(animation)
 	}
 	delete(sprite.animations)
-	
+
 	// Don't unload texture - it's cached globally
 	sprite.exists = false
 	free(sprite)
@@ -361,4 +372,26 @@ sprites_overlap :: proc(sprite1: ^Sprite, sprite2: ^Sprite) -> bool {
 	rect2 := sprite_get_rect(sprite2)
 
 	return rl.CheckCollisionRecs(rect1, rect2)
+}
+
+// Get sprite position as a vector
+sprite_get_position :: proc(sprite: ^Sprite) -> Vec2 {
+	return Vec2{sprite.x, sprite.y}
+}
+
+// Set sprite position from a vector
+sprite_set_position :: proc(sprite: ^Sprite, pos: Vec2) {
+	sprite.x = pos.x
+	sprite.y = pos.y
+}
+
+// Get sprite center position
+sprite_get_center :: proc(sprite: ^Sprite) -> Vec2 {
+	return Vec2{sprite.x + sprite.width / 2, sprite.y + sprite.height / 2}
+}
+
+// Set sprite position by its center
+sprite_set_center :: proc(sprite: ^Sprite, center: Vec2) {
+	sprite.x = center.x - sprite.width / 2
+	sprite.y = center.y - sprite.height / 2
 }

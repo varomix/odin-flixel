@@ -23,7 +23,8 @@ play_state_create :: proc(state: ^flx.State) {
 	play := cast(^PlayState)state
 
 	// Add a text field at position 0,0 with width 100
-	text := flx.text_new(200, 200, 100, "You are in the Play State!")
+	text := flx.text_new(0, 200, 800, "You are in the Play State!")
+	flx.text_set_alignment(text, .CENTER)
 	flx.state_add(play, text)
 }
 

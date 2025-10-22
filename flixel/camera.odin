@@ -28,7 +28,7 @@ camera_update :: proc(cam: ^Camera, dt: f32) {
 				rand.float32_range(-cam.shake_intensity, cam.shake_intensity) * f32(get_width())
 			shake_amount_y :=
 				rand.float32_range(-cam.shake_intensity, cam.shake_intensity) * f32(get_height())
-			cam.rl_camera.offset = rl.Vector2{shake_amount_x, shake_amount_y}
+			cam.rl_camera.offset = {shake_amount_x, shake_amount_y}
 		}
 	}
 }

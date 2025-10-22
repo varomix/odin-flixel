@@ -50,8 +50,8 @@ text_new_with_color :: proc(
 	x, y: f32,
 	width: f32,
 	text: string,
-	font_size: i32,
-	color: Color,
+	font_size: i32 = 20,
+	color: Color = WHITE,
 ) -> ^Text {
 	txt := new(Text)
 

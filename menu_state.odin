@@ -25,16 +25,19 @@ menu_state_create :: proc(state: ^flx.State) {
 	menu := cast(^MenuState)state
 
 	// Create title text - super clean API!
-	menu.title = flx.text_new(100, 100, 400, "ODIN FLIXEL", 32, flx.WHITE)
+	menu.title = flx.text_new(0, 100, 800, "ODIN FLIXEL", 32, flx.WHITE)
+	flx.text_set_alignment(menu.title, .CENTER)
 	flx.state_add(menu, menu.title)
 
 	// Create subtitle (blinking text)
-	menu.subtitle = flx.text_new(100, 200, 400, "A Flixel-like Framework", 16, flx.GRAY)
+	menu.subtitle = flx.text_new(0, 200, 800, "A Flixel-like Framework", 16, flx.GRAY)
+	flx.text_set_alignment(menu.subtitle, .CENTER)
 	flx.text_enable_blink(menu.subtitle, 2.0) // Blink 2 times per second
 	flx.state_add(menu, menu.subtitle)
 
 	// Create instructions
-	menu.instructions = flx.text_new(100, 250, 400, "Press SPACE to start", 16, flx.WHITE)
+	menu.instructions = flx.text_new(0, 250, 800, "Press SPACE to start", 16, flx.WHITE)
+	flx.text_set_alignment(menu.instructions, .CENTER)
 	flx.state_add(menu, menu.instructions)
 }
 
