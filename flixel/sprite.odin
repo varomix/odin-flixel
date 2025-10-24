@@ -29,6 +29,14 @@ Sprite :: struct {
 	has_texture:       bool,
 	color:             Color,
 
+	// Transform
+	angle:             f32, // Rotation angle in degrees
+	scale:             Vec2, // Scale factor for x and y
+	origin:            Vec2, // Origin point for rotation (default is center)
+	offset:            Vec2, // Offset for drawing the graphic from position
+	flip_x:            bool, // Flip horizontally
+	flip_y:            bool, // Flip vertically
+
 	// Animation
 	animations:        map[string]^Animation,
 	current_animation: ^Animation,
@@ -73,6 +81,14 @@ sprite_new :: proc(x: f32 = 0, y: f32 = 0) -> ^Sprite {
 	sprite.was_touching = COLLISION_NONE
 	sprite.allow_collisions = COLLISION_ANY
 
+	// Initialize transform fields
+	sprite.angle = 0
+	sprite.scale = {1, 1}
+	sprite.origin = {0, 0}
+	sprite.offset = {0, 0}
+	sprite.flip_x = false
+	sprite.flip_y = false
+
 	// Initialize animation fields
 	sprite.animations = make(map[string]^Animation)
 	sprite.current_animation = nil
@@ -108,6 +124,7 @@ sprite_load_graphic :: proc(sprite: ^Sprite, path: string) -> bool {
 		sprite.has_texture = true
 		sprite.width = f32(sprite.texture.width)
 		sprite.height = f32(sprite.texture.height)
+		sprite.origin = {sprite.width * 0.5, sprite.height * 0.5}
 		return true
 	}
 
@@ -124,6 +141,7 @@ sprite_load_graphic :: proc(sprite: ^Sprite, path: string) -> bool {
 	sprite.has_texture = true
 	sprite.width = f32(sprite.texture.width)
 	sprite.height = f32(sprite.texture.height)
+	sprite.origin = {sprite.width * 0.5, sprite.height * 0.5}
 	return true
 }
 
@@ -279,30 +297,55 @@ sprite_draw :: proc(obj: ^Object) {
 	}
 
 	if sprite.has_texture {
+		// Determine the source rectangle based on animation or full texture
+		source_rect: rl.Rectangle
 		if sprite.current_animation != nil && sprite.frame_width > 0 && sprite.frame_height > 0 {
-			// Draw animated sprite with frame clipping
+			// Use animation frame
 			frame_index := sprite.current_animation.frames[sprite.current_frame].frame_index
 			frame_x := f32(frame_index % sprite.frames_per_row) * sprite.frame_width
 			frame_y := f32(frame_index / sprite.frames_per_row) * sprite.frame_height
-
-			source_rect := rl.Rectangle{frame_x, frame_y, sprite.frame_width, sprite.frame_height}
-			dest_rect := rl.Rectangle{sprite.x, sprite.y, sprite.frame_width, sprite.frame_height}
-
-			if sprite.color.r == 255 && sprite.color.g == 255 && sprite.color.b == 255 {
-				rl.DrawTexturePro(sprite.texture, source_rect, dest_rect, {0, 0}, 0, rl.WHITE)
-			} else {
-				rl.DrawTexturePro(sprite.texture, source_rect, dest_rect, {0, 0}, 0, sprite.color)
-			}
+			source_rect = rl.Rectangle{frame_x, frame_y, sprite.frame_width, sprite.frame_height}
 		} else {
-			// Draw static sprite
-			if sprite.color.r == 255 && sprite.color.g == 255 && sprite.color.b == 255 {
-				rl.DrawTexture(sprite.texture, i32(sprite.x), i32(sprite.y), rl.WHITE)
-			} else {
-				rl.DrawTexture(sprite.texture, i32(sprite.x), i32(sprite.y), sprite.color)
-			}
+			// Use full texture
+			source_rect = rl.Rectangle{0, 0, f32(sprite.texture.width), f32(sprite.texture.height)}
 		}
+
+		// Apply flipping to source rectangle
+		if sprite.flip_x {
+			source_rect.width = -source_rect.width
+		}
+		if sprite.flip_y {
+			source_rect.height = -source_rect.height
+		}
+
+		// Calculate destination dimensions with scale
+		draw_width := sprite.width * sprite.scale.x
+		draw_height := sprite.height * sprite.scale.y
+
+		// Calculate draw position with offset
+		draw_x := sprite.x - sprite.offset.x
+		draw_y := sprite.y - sprite.offset.y
+
+		// Create destination rectangle
+		dest_rect := rl.Rectangle{draw_x, draw_y, draw_width, draw_height}
+
+		// Determine color to use
+		draw_color := sprite.color
+		if sprite.color.r == 255 && sprite.color.g == 255 && sprite.color.b == 255 {
+			draw_color = rl.WHITE
+		}
+
+		// Draw with rotation and scaling
+		rl.DrawTexturePro(
+			sprite.texture,
+			source_rect,
+			dest_rect,
+			sprite.origin,
+			sprite.angle,
+			draw_color,
+		)
 	} else {
-		// Draw solid color rectangle
+		// Draw solid color rectangle (no rotation support for rectangles)
 		rl.DrawRectangle(
 			i32(sprite.x),
 			i32(sprite.y),
@@ -394,4 +437,30 @@ sprite_get_center :: proc(sprite: ^Sprite) -> Vec2 {
 sprite_set_center :: proc(sprite: ^Sprite, center: Vec2) {
 	sprite.x = center.x - sprite.width / 2
 	sprite.y = center.y - sprite.height / 2
+}
+
+// Set the origin point for rotation (default is center of sprite)
+sprite_set_origin :: proc(sprite: ^Sprite, x: f32, y: f32) {
+	sprite.origin = {x, y}
+}
+
+// Set origin to corner (0, 0)
+sprite_set_origin_to_corner :: proc(sprite: ^Sprite) {
+	sprite.origin = {0, 0}
+}
+
+// Set origin to center of sprite
+sprite_center_origin :: proc(sprite: ^Sprite) {
+	sprite.origin = {sprite.width * 0.5, sprite.height * 0.5}
+}
+
+// Center the offset to align the graphic with the bounding box
+sprite_center_offset :: proc(sprite: ^Sprite) {
+	if sprite.frame_width > 0 && sprite.frame_height > 0 {
+		sprite.offset.x = (sprite.frame_width - sprite.width) * 0.5
+		sprite.offset.y = (sprite.frame_height - sprite.height) * 0.5
+	} else {
+		sprite.offset.x = 0
+		sprite.offset.y = 0
+	}
 }

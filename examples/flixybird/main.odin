@@ -13,7 +13,7 @@ main :: proc() {
 	initial_state := play_state_new()
 
 	// Initialize the game engine (320x240 scaled 2x )
-	game := flx.init(320, 240, "FlixyBird", &initial_state.base, 60, 3)
+	game := flx.init(288, 512, "FlixyBird", &initial_state.base, 60, 2)
 
 	flx.run(game)
 }
